@@ -41,6 +41,10 @@ public:
 
 	void setPlanePly(PlyFile plane);
 
+	PlyFile getPlanePly();
+
+	void rotateAboutPoint(Eigen::Matrix3d rotation, Eigen::Vector3d point);
+
 	int size();
 
 	void rotatePlane(Eigen::Matrix3d rotation);

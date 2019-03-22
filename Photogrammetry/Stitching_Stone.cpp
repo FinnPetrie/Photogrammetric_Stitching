@@ -95,7 +95,29 @@ int main(void) {
 	PlyFile ventral("DynamicSurface.ply");
 	Plane vPlane("DynamicPlane.ply.plane", "DynamicPlane.ply");
 
+	//Surface ventral(ventral, vPlane);
 	ventral.rotateAxis(2, -1);
+	ventral.rotateAxis(0, -0.8);
+
+		Eigen::Matrix3d cov = ventral.covariance();
+		Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> covEigens(cov);
+		std::cout << "The eigenvalues of A are: \n" << covEigens.eigenvalues() << std::endl;
+		std::cout << "Here's a matrix whose columns are eigenvectors of A \n"
+		        << "corresponding to these eigenvalues:\n"
+		        << covEigens.eigenvectors() << std::endl;
+
+		std::cout << "\n\n\"" << std::endl;
+		std::cout << cov << std::endl;
+		std::cout << "The second eigenvector of the 3x3 covariance matrix is:"
+		     << std::endl << covEigens.eigenvectors().col(2) << std::endl;
+
+		 Eigen::Matrix3d m;
+		 Eigen::Matrix3d z;
+		 m = Eigen::AngleAxisd(M_PI, covEigens.eigenvectors().col(2));
+		 z = Eigen::AngleAxisd(-0.8*M_PI, covEigens.eigenvectors().col(0));
+	vPlane.rotateOrigin(m);
+	vPlane.rotateOrigin(z);
+
 	ventral.write("RotatedVentral.ply");
 
 

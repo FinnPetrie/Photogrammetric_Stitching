@@ -1,7 +1,7 @@
 #include "Surface.h"
 
-Surface::Surface(PlyFile surface, PlyFile plane) : surface(surface), plane(plane){
-	augmentation = surface + plane;
+Surface::Surface(PlyFile surface, Plane plane) : surface(surface), plane(plane){
+	augmentation = surface + plane.getPlanePly();
 }
 
 
@@ -34,6 +34,7 @@ void Surface::rotate(int axis, double amount){
 
 		 plane.rotateAboutPoint(mz, surface.centroid());
 		 plane.translateCloud(Eigen::Vector3d(0, -0.05, 0.03));
+
 		 //plane.rotateOrigin(z.transpose());
 		// augmentation.rotateOrigin(m);
 		// augmentation.rotateOrigin(z);

@@ -123,6 +123,25 @@ void Plane::rotatePlane(Eigen::Matrix3d rotation){
 	//planePly.rotateCloud(rotation);
 }
 
+
+PlyFile Plane::getPlanePly(){
+	return planePly;
+}
+
+void Plane::rotateAboutPoint(Eigen::Matrix3d rotation, Eigen::Vector3d point){
+	planeNormal -= point;
+	point -= point;
+	Eigen::Vector3d newNormal = rotation * planeNormal;
+	Eigen::Vector3d newPoint = rotation * point;
+	newNormal -= -(point);
+	newPoint -= -(point);
+	point = newPoint;
+	planeNormal = newNormal;
+
+	planePly.rotateAboutPoint(rotation, point);
+
+}
+
 bool Plane::write(std::string filename){
 
 	planePly.write(filename);
