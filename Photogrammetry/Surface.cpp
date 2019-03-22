@@ -27,13 +27,13 @@ void Surface::rotate(int axis, double amount){
 		 Eigen::Matrix3d mz = z * m;
 
 		 surface.rotateOrigin(mz);
-		 surface.translateCloud(Eigen::Vector3d(0, 0.05, -0.03));
+		 //surface.translateCloud(Eigen::Vector3d(0, 0.05, -0.03));
 
 		 //surface.rotate(z.transpose());
 		// drawVectors(covEigens.eigenvectors().col(2), 30);
 
 		 plane.rotateAboutPoint(mz, surface.centroid());
-		 plane.translateCloud(Eigen::Vector3d(0, -0.05, 0.03));
+		// plane.translateCloud(Eigen::Vector3d(0, -0.05, 0.03));
 
 		 //plane.rotateOrigin(z.transpose());
 		// augmentation.rotateOrigin(m);

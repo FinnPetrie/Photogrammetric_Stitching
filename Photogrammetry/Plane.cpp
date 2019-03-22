@@ -130,12 +130,12 @@ PlyFile Plane::getPlanePly(){
 
 void Plane::rotateAboutPoint(Eigen::Matrix3d rotation, Eigen::Vector3d point){
 	planeNormal -= point;
-	point -= point;
+	this->point -= point;
 	Eigen::Vector3d newNormal = rotation * planeNormal;
 	Eigen::Vector3d newPoint = rotation * point;
 	newNormal -= -(point);
 	newPoint -= -(point);
-	point = newPoint;
+	this->point = newPoint;
 	planeNormal = newNormal;
 
 	planePly.rotateAboutPoint(rotation, point);
