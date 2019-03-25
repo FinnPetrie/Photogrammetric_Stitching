@@ -12,6 +12,23 @@ Plane::Plane(PlyFile plane) : planePly(plane){
 	std::cout << planeNormal;
 }
 
+Plane::Plane(PlyFile surface, bool t){
+	//construct the plane from the plyfile's covariance matrix.
+	Eigen::Matrix3d cov = surface.covariance();
+	Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> covEigens(cov);
+	//the two larger eigen-vectors are those that we wish to use to define the plane.
+	//that is cov[1], cov[2];
+
+	Eigen::Vector3d x = covEigens.eigenvectors().col(1);
+	Eigen::Vector3d y = covEigens.eigenvectors().col(2);
+
+	Eigen::Vector3d normalPlane = x.cross(y);
+
+	this->point = x;
+	this->planeNormal = normalPlane;
+
+}
+
 
 
 Plane::Plane(std::string pathToNormal, std::string pathToPly){
@@ -60,8 +77,8 @@ bool Plane::read(std::string path){
 	for(int i = 0; i < 3; i++){
 		std::string point1 = values[i];
 		std::string point2 = values[3 + i];
-		double normalComponent = std::atof(point2.c_str());
-		double pointComponent = std::atof(point1.c_str());
+		double normalComponent = std::atof(point1.c_str());
+		double pointComponent = std::atof(point2.c_str());
 		normal[i] = normalComponent;
 		point[i] = pointComponent;
 
@@ -82,6 +99,8 @@ Eigen::Vector3d Plane::projectToPlane(Eigen::Vector3d toProject){
 	double scalarProj = planeNormal.dot(toProject)/normA;
 
 	return scalarProj*planeNormal/normA;
+
+	//return toProject - scalarProj*planeNormal;
 
 }
 

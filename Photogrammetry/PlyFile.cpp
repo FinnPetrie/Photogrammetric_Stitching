@@ -76,9 +76,12 @@ std::vector<Vertex> PlyFile::getPoints(){
 
 
 void PlyFile::translateCloud(Eigen::Vector3d trans){
+	Eigen::Vector3d cent = centroid();
+	translateToOrigin(cent);
 	for(int i = 0; i < size(); i++){
 		points_[i].location += trans;
 	}
+	translateToOrigin(-cent);
 }
 
 
@@ -286,8 +289,9 @@ bool PlyFile::writeRed(const std::string& filename){
 	    }
 	    fout.close();
 	    return true;
-
 }
+
+
 int PlyFile::size(){
 	return points_.size();
 }
@@ -325,6 +329,26 @@ void PlyFile::rotateAxis(int axis, double amount){
 	 rotateOrigin(m);
 }
 
+
+Eigen::Matrix3d PlyFile::changeOfBasis(Eigen::Matrix3d toBasis, Eigen::Matrix3d fromBasis){
+		Eigen::Matrix3d fromBasisInv = fromBasis.inverse();
+		Eigen::Matrix3d changeOfBasis = toBasis*fromBasisInv;
+
+		return changeOfBasis;
+}
+
+
+void PlyFile::representUnderChangeBasis(Eigen::Matrix3d toBasis, Eigen::Matrix3d fromBasis, Eigen::Vector3d centroid){
+	Eigen::Matrix3d change = changeOfBasis(toBasis, fromBasis);
+
+	for(int i = 0 ; i < size(); i++){
+		Eigen::Vector3d point = points_[i].location - centroid;
+		Eigen::Vector3d changePoint = change*point;
+
+		updateLocation(changePoint, i);
+	}
+
+}
 
 PlyFile PlyFile::colourThreshold(Eigen::Vector3i colour, double threshold, std::string filename ){
 	PlyFile colourFiltered;

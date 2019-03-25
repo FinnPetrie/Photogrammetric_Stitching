@@ -40,6 +40,8 @@ Eigen::Affine3d create_rotation_matrix(double ax, double ay, double az) {
 
 
 
+
+
 void translatePlanes(Plane ventralPlane, Plane dorsalPlane, PlyFile dorsalSurface, PlyFile ventralSurface){
 	Measure dorsalHeight(dorsalSurface);
 	Measure ventralHeight(ventralSurface);
@@ -94,9 +96,42 @@ int main(void) {
 	Plane dPlane("StaticPlane.ply.plane", "StaticPlane.ply");
 	PlyFile ventral("DynamicSurface.ply");
 	Plane vPlane("DynamicPlane.ply.plane", "DynamicPlane.ply");
+	PlyFile dorPlane("StaticPlane.ply");
+	PlyFile venPlane("RotatedPlane2.ply");
+	//Surface vent(ventral, vPlane);
+	//vent.rotate(0,0);
 
-	Surface vent(ventral, vPlane);
-	vent.rotate(0,0);
+	PlyFile ventral2("RotatedVentral2.ply");
+	Plane ventralPlane3(venPlane);
+	Plane dorsalPlane3(dorPlane);
+
+	//Plane vPlane2("RotatedPlane2.ply.plane", "RotatedPlane2.ply");
+
+	//translatePlanes(vPlane2, dPlane, dorsal, ventral2);
+
+	Plane ventralPlane(ventral2, true);
+	Plane dorsalPlane(dorsal, true);
+
+	Eigen::Matrix3d ventralCov = ventral.covariance();
+	Eigen::EigenSolver<Eigen::Matrix3d> es(ventralCov);
+	Eigen::Matrix3cd ventBasis = es.eigenvectors();
+	Eigen::Matrix3d ventBasisNoComplex = ventBasis.real();
+
+
+	Eigen::Matrix3d dorsalCov = dorsal.covariance();
+	Eigen::EigenSolver<Eigen::Matrix3d> dorsalEs(dorsalCov);
+	Eigen::Matrix3cd dorsalBasis = dorsalEs.eigenvectors();
+	Eigen::Matrix3d dorsalBasisNoComplex = dorsalBasis.real();
+	Eigen::Vector3d centr = dorsal.centroid();
+	ventral2.representUnderChangeBasis(dorsalBasisNoComplex, ventBasisNoComplex, centr);
+	//dorsal.representUnderChangeBasis(dorsalBasisNoComplex, dorsalBasisNoComplex, centr);
+
+	dorsal.translateToOrigin(centr);
+	dorsal.write("DorsalCOB.ply");
+	ventral2.write("VentralCOB.ply");
+
+	//translatePlanes(ventralPlane3, dorsalPlane3, dorsal, ventral2);
+
 	//ventral.rotateAxis(2, -1);
 	//ventral.rotateAxis(0, -0.8);
 
@@ -202,7 +237,12 @@ int main(void) {
 	     << std::endl << covEigens.eigenvectors().col(2) << std::endl;
 
 	 Eigen::Matrix3d m;
-	 Eigen::Matrix3d z;
+	 E
+		//	std::cout << i << std::endl;
+			Vector3d roTransPoint = rotation * planeDynamic[i].location;
+			roTransPoint += translation;
+			planeDynamic.updateLocation(roTransPoint, i);
+		igen::Matrix3d z;
 	 m = Eigen::AngleAxisd(M_PI, covEigens.eigenvectors().col(2));
 	 z = Eigen::AngleAxisd(-0.8*M_PI, covEigens.eigenvectors().col(0));
 	// stiched.rotateOrigin(reflection);

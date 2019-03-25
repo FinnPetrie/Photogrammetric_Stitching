@@ -81,8 +81,6 @@ Eigen::Vector3d Measure::project(Eigen::Vector3d a, Eigen::Vector3d b){
 	double scalarProj = a.dot(b)/normA;
 
 	return scalarProj*a/normA;
-
-
 }
 
 
@@ -98,6 +96,16 @@ Eigen::Vector3d Measure::highestPoint(){
 				projected = project(dimension, toMeasure[i].location);
 				projectedPoints.push_back(projected);
 			}
+
+			std::vector<Vertex> points;
+			for(int i = 0; i < projectedPoints.size(); i++){
+				Vertex v;
+				v.location = projectedPoints[i];
+				points.push_back(v);
+			}
+
+			PlyFile projectedPs(points);
+			projectedPs.write("ProjectedPoints.ply");
 
 			double largestMagnitude = 0;
 			double magnitude;

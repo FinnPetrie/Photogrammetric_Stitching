@@ -19,6 +19,7 @@ private:
 
 public:
 	Plane();
+	Plane(PlyFile, bool t);
 	Plane(PlyFile plane);
 	Plane(std::string pathToPlane, std::string pathToPly);
 

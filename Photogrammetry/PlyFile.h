@@ -64,6 +64,10 @@ public:
 
 		void clear();
 
+		Eigen::Matrix3d changeOfBasis(Eigen::Matrix3d toBasis, Eigen::Matrix3d fromBasis);
+
+		void representUnderChangeBasis(Eigen::Matrix3d toBasis, Eigen::Matrix3d fromBasis, Eigen::Vector3d centroid);
+
 		void updateLocation(Eigen::Vector3d update, int index);
 
 		void translateCloud(Eigen::Vector3d translation);
