@@ -10,6 +10,8 @@
 #include "Measure.h"
 #include "Plane.h"
 #include "Surface.h"
+#include "Procrustes.h"
+#include "CircularDemons.h"
 
 
 /* Helper method to create a rotation matrix as Eigen is a bit weird with this.
@@ -98,6 +100,10 @@ int main(void) {
 	Plane vPlane("DynamicPlane.ply.plane", "DynamicPlane.ply");
 	PlyFile dorPlane("StaticPlane.ply");
 	PlyFile venPlane("RotatedPlane2.ply");
+
+	PlyFile staticHull("StaticHull.ply");
+	PlyFile dynamicHull("DynamicHull.ply");
+
 	//Surface vent(ventral, vPlane);
 	//vent.rotate(0,0);
 
@@ -105,20 +111,27 @@ int main(void) {
 	Plane ventralPlane3(venPlane);
 	Plane dorsalPlane3(dorPlane);
 
-	//Plane vPlane2("RotatedPlane2.ply.plane", "RotatedPlane2.ply");
+	Procrustes p(dorsal, ventral);
+	p.removeTranslation();
+	p.write();
 
-	//translatePlanes(vPlane2, dPlane, dorsal, ventral2);
+	CircularDemons cDemon(staticHull, dynamicHull, dorsal, ventral);
+	cDemon.run();
+	//translatePlanes(ventralPlane3, dorsalPlane3, dorsal, ventral2);
 
-	Plane ventralPlane(ventral2, true);
-	Plane dorsalPlane(dorsal, true);
 
-	Eigen::Matrix3d ventralCov = ventral.covariance();
+
+
+
+
+
+	/**Eigen::Matrix3d ventralCov = ventral.covariance();
 	Eigen::EigenSolver<Eigen::Matrix3d> es(ventralCov);
 	Eigen::Matrix3cd ventBasis = es.eigenvectors();
 	Eigen::Matrix3d ventBasisNoComplex = ventBasis.real();
 
 
-	Eigen::Matrix3d dorsalCov = dorsal.covariance();
+/**	Eigen::Matrix3d dorsalCov = dorsal.covariance();
 	Eigen::EigenSolver<Eigen::Matrix3d> dorsalEs(dorsalCov);
 	Eigen::Matrix3cd dorsalBasis = dorsalEs.eigenvectors();
 	Eigen::Matrix3d dorsalBasisNoComplex = dorsalBasis.real();
@@ -126,9 +139,20 @@ int main(void) {
 	ventral2.representUnderChangeBasis(dorsalBasisNoComplex, ventBasisNoComplex, centr);
 	//dorsal.representUnderChangeBasis(dorsalBasisNoComplex, dorsalBasisNoComplex, centr);
 
-	dorsal.translateToOrigin(centr);
-	dorsal.write("DorsalCOB.ply");
-	ventral2.write("VentralCOB.ply");
+	//dorsal.translateToOrigin(centr);
+	//dorsal.write("DorsalCOB.ply");
+	//ventral2.write("VentralCOB.ply");
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 */
 
 	//translatePlanes(ventralPlane3, dorsalPlane3, dorsal, ventral2);
 
