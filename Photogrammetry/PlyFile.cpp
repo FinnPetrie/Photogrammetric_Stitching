@@ -227,7 +227,9 @@ bool PlyFile::write(const std::string& filename){
 	    for (size_t ix = 0; ix < size(); ++ix) {
 	        fout << points_[ix].location << " " << points_[ix].normal << " " << points_[ix].colour << "\n";
 	    }
+
 	    fout.close();
+
 	    return true;
 
 }
@@ -295,6 +297,31 @@ bool PlyFile::writeRed(const std::string& filename){
 int PlyFile::size(){
 	return points_.size();
 }
+
+
+double PlyFile::curvatureAtPoint(int index){
+	int previousIndex = index -1;
+	int afterIndex = index + 1;
+
+	if(index == 0){
+		previousIndex = points_.size();
+	}
+	else if(index == points_.size()){
+		afterIndex = 0;
+	}
+
+	Eigen::Vector3d previous = points_[index].location - points_[previousIndex].location;
+	Eigen::Vector3d next = points_[index].location - points_[afterIndex].location;
+
+	double previousMag = previous.norm();
+	double nextMag = next.norm();
+
+	double cos = previous.dot(next)/(previousMag*nextMag);
+	return acos(cos);
+
+
+}
+
 
 void PlyFile::reColour(int r, int g, int b){
 	for(int i = 0; i < points_.size(); i++){

@@ -3,6 +3,7 @@
 
 #include <eigen3/Eigen/Core>
 #include "PlyFile.h"
+#include <iostream>
 
 
 class Procrustes{
@@ -18,7 +19,10 @@ public:
 	void removeTranslation();
 	void removeRotation();
 	void superImpose();
-	void write();
+	void write(std::string first, std::string second);
+
+	PlyFile getFirst();
+	PlyFile getSecond();
 
 
 

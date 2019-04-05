@@ -79,21 +79,8 @@ void translatePlanes(Plane ventralPlane, Plane dorsalPlane, PlyFile dorsalSurfac
 
 
 }
-int main(void) {
 
-	/**PlyFile ventralPlane("Ventral_Reorientated_Plane.ply");
-	PlyFile ventral("Ventral_Reorientated_Surface.ply");
-	PlyFile ventralConvex("VentralConvexHull.ply");
-	Plane vPlane("Ventral_ransacPlane.plane", "Ventral_Reorientated_Plane.ply");
-
-	PlyFile dorsalPlane("Dorsal_Reorientated_Plane.ply");
-	PlyFile dorsal("Dorsal_Reorientated_Surface.ply");
-	PlyFile dorsalConvex("DorsalConvexHull.ply");
-	Plane dPlane("Dorsal_ransacPlane.plane", "Dorsal_Reorientated_Plane.ply");
-
-	//IterativeClosestPoint i(dorsalConvex, ventralConvex, ventral, dorsal, dPlane, vPlane);
-	//i.computeStochastic(0.0001, 5, true);*/
-
+void computeDemons(){
 	PlyFile dorsal("StaticSurface.ply");
 	Plane dPlane("StaticPlane.ply.plane", "StaticPlane.ply");
 	PlyFile ventral("DynamicSurface.ply");
@@ -113,206 +100,27 @@ int main(void) {
 
 	Procrustes p(dorsal, ventral);
 	p.removeTranslation();
-	p.write();
+	Procrustes hull(staticHull, dynamicHull);
+	hull.removeTranslation();
 
-	CircularDemons cDemon(staticHull, dynamicHull, dorsal, ventral);
+
+
+	CircularDemons cDemon(hull.getFirst(), hull.getSecond(), p.getFirst(), p.getSecond());
 	cDemon.run();
-	//translatePlanes(ventralPlane3, dorsalPlane3, dorsal, ventral2);
+}
+
+void filter(std::string Ventral, std::string Dorsal){
+	PlyFile ventral(Ventral);
+	PlyFile dorsal(Dorsal);
+
+	ventral.colourThreshold(Eigen::Vector3i(0,0,0), 25.0, "ventral_filter");
+	dorsal.colourThreshold(Eigen::Vector3i(0,0,0), 25.0, "dorsal_filter");
 
 
-
-
-
-
-
-	/**Eigen::Matrix3d ventralCov = ventral.covariance();
-	Eigen::EigenSolver<Eigen::Matrix3d> es(ventralCov);
-	Eigen::Matrix3cd ventBasis = es.eigenvectors();
-	Eigen::Matrix3d ventBasisNoComplex = ventBasis.real();
-
-
-/**	Eigen::Matrix3d dorsalCov = dorsal.covariance();
-	Eigen::EigenSolver<Eigen::Matrix3d> dorsalEs(dorsalCov);
-	Eigen::Matrix3cd dorsalBasis = dorsalEs.eigenvectors();
-	Eigen::Matrix3d dorsalBasisNoComplex = dorsalBasis.real();
-	Eigen::Vector3d centr = dorsal.centroid();
-	ventral2.representUnderChangeBasis(dorsalBasisNoComplex, ventBasisNoComplex, centr);
-	//dorsal.representUnderChangeBasis(dorsalBasisNoComplex, dorsalBasisNoComplex, centr);
-
-	//dorsal.translateToOrigin(centr);
-	//dorsal.write("DorsalCOB.ply");
-	//ventral2.write("VentralCOB.ply");
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 */
-
-	//translatePlanes(ventralPlane3, dorsalPlane3, dorsal, ventral2);
-
-	//ventral.rotateAxis(2, -1);
-	//ventral.rotateAxis(0, -0.8);
-
-	/*Eigen::Matrix3d cov = ventral.covariance();
-	Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> covEigens(cov);
-	std::cout << "The eigenvalues of A are: \n" << covEigens.eigenvalues() << std::endl;
-	std::cout << "Here's a matrix whose columns are eigenvectors of A \n"
-			        << "corresponding to these eigenvalues:\n"
-			        << covEigens.eigenvectors() << std::endl;
-
-	std::cout << "\n\n\"" << std::endl;
-	std::cout << cov << std::endl;
-	std::cout << "The second eigenvector of the 3x3 covariance matrix is:"
-			     << std::endl << covEigens.eigenvectors().col(2) << std::endl;
-
-	Eigen::Matrix3d m;
-	Eigen::Matrix3d z;
-	m = Eigen::AngleAxisd(-1*M_PI, covEigens.eigenvectors().col(2));
-	z = Eigen::AngleAxisd(-0.8*M_PI, covEigens.eigenvectors().col(0));
-	Eigen::Matrix3d mz = z *m;
-		vPlane.rotateAboutPoint(mz, ventral.centroid());
-		vPlane.write("RotatedPlane.ply");
-		ventral.write("RotatedVentral.ply");
-	//Surface newSurface(ventral, vPlane);
-	//newSurface.rotate(0,0);
-	//Surface ventral(ventral, vPlane);
-	//ventral.rotateAxis(2, -1);
-	//ventral.rotateAxis(0, -0.8);
-
-
-	//ventral.write("RotatedVentral.ply");
-	//vPlane.write("RotateVentralPlane.ply");
-
-
-	//translatePlanes(vPlane, dPlane, ventral, dorsal);
-	//PlyFile ventral("DynamicSurface.ply");
-	//PlyFile ventralPlane("DynamicPlane.ply");
-	//Plane vPlane(ventralPlane);
-
-
-	//Surface newSurface(ventral, ventralPlane);
-	//PlyFile newPly = ventral + ventralPlane;
-	//std::cout << "New ply created" << std::endl;
-	//newPly.write("AugmentedVentral.ply");
-
-	//newSurface.rotate(0,0);
-
-	//ventral.augment(ventralPlane);
-
-
-	//translatePlanes(vPlane, dPlane, dorsal, ventral);
-	//IterativeClosestPoint i(dorsalConvex, ventralConvex, ventral, dorsal, dorsalPlane, ventralPlane);
-	//i.computeStochastic(0.0001, 5, true);
-
-	//ply = ply.colourThreshold(Eigen::Vector3i(0, 0, 0), 20, "Dorsal_Filtered");
-
-	/**
-	PlyFile dorsalConv("DorsalConvexHull.ply");
-	PlyFile ventralConv("VentralConvexHullXY.ply");
-	PlyFile orgVentral("VentralRealignedXY.ply");
-	PlyFile orgDorsal("DorsalRealigned.ply");
-
-
-
-	//PlyFile ply("Dorsal_Fused.ply");
-//	PlyFile stitching("Stitching.ply");
-	//PlyFile stiched("Stiched.ply");
-
-	//ply = ply.colourThreshold(Eigen::Vector3i(0, 0, 0), 25, "VentralcolourFilteredDense");
-//	PlyFile colourFiltered("VentralcolourFilteredDense_Reformed.ply");
-	//KMeans k(11, &colourFiltered);
-	//k.clustering(0.1, "VentralCluster ");
-
-	//for(int i = 0; i < dorsal.size(); i++){
-		//dorsal[i].location = dorsal[i].location + Eigen::Vector3d(5, 5, 5);
-	//}
-
-
-	Eigen::Affine3d rotate = create_rotation_matrix(0.0, 0.5, 0.0);
-	Eigen::Matrix4d fourRotate = rotate.matrix();
-	Eigen::Matrix3d ro;
-	ro << fourRotate(0,0), fourRotate(0,1), fourRotate(0,2),
-					fourRotate(1,0), fourRotate(1, 1), fourRotate(1,2),
-					fourRotate(2, 0), fourRotate(2,1), fourRotate(2,2);
-	//std::cout << ro << std::endl;
-	 * */
-
-	//stiched.rotateCloud(ro);
-
-/**
-
-
-	Eigen::Matrix3d cov = ventral.covariance();
-	Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> covEigens(cov);
-	std::cout << "The eigenvalues of A are: \n" << covEigens.eigenvalues() << std::endl;
-	std::cout << "Here's a matrix whose columns are eigenvectors of A \n"
-	        << "corresponding to these eigenvalues:\n"
-	        << covEigens.eigenvectors() << std::endl;
-
-	std::cout << "\n\n\"" << std::endl;
-	std::cout << cov << std::endl;
-	std::cout << "The second eigenvector of the 3x3 covariance matrix is:"
-	     << std::endl << covEigens.eigenvectors().col(2) << std::endl;
-
-	 Eigen::Matrix3d m;
-	 E
-		//	std::cout << i << std::endl;
-			Vector3d roTransPoint = rotation * planeDynamic[i].location;
-			roTransPoint += translation;
-			planeDynamic.updateLocation(roTransPoint, i);
-		igen::Matrix3d z;
-	 m = Eigen::AngleAxisd(M_PI, covEigens.eigenvectors().col(2));
-	 z = Eigen::AngleAxisd(-0.8*M_PI, covEigens.eigenvectors().col(0));
-	// stiched.rotateOrigin(reflection);
-	ventral.rotateAxis(2, 1);
-	ventral.rotateAxis(0, -0.8);
-	ventralPlane.rotateOrigin(m);
-	ventralPlane.rotateOrigin(z);
-	//vPlane.rotateAxis(2, 0.8);
-	//vPlane.rotateAxis(0, -0.8);
-	//vPlane.rotateOrigin(m);
-	//vPlane.reColour(0, 128, 128);
-	// vPlane.write("RotatedVentralPlane.ply");
-	// stiched.translateCloud(Eigen::Vector3d(-0.01, 0.06, -0.05));
-	 ventral.reColour(0, 255, 0);
-	 ventral.write("RotatedVentral.ply");
-	 ventralPlane.write("RotatedPlaneVent.ply");
-
-
-
-
-	//PlyFile aug("AugmentedStitch.ply");
-
-	//Measure measure(aug);
-
-	//std::cout << measure.maximumDimension() << std::endl;
-	//std::cout << measure.maximumThickness() << std::endl;
-
-
-
-
-
-
-
-//	Eigen::Vector3d translate = Eigen::Vector3d(0.5, 0.5, 0.5);
-	//for(int i =0 ; i < dorsalConvex.size(); i++){
-	//	Eigen::Vector3d rot = ro * dorsalConvex[i].location + translate;
-//
-	//	toRotate.updateLocation(rot, i);
-	//}*/
-	//toRotate.write("DynamicRotate.ply");
-
-
-
-	//i.compute(0.1);
-	//ply.print();
-	//k.print();
+}
+int main(void) {
+	//filter("Ventral_Fused.ply", "Dorsal_Fused.ply");
+	computeDemons();
 
 	return 0;
 }

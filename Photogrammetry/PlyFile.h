@@ -12,6 +12,7 @@
 		Eigen::Vector3d location;
 		Eigen::Vector3i colour;
 		Eigen::Vector3d normal;
+		double curvature;
 
 		void print(){
 			std::cout << location << std::endl;
@@ -61,6 +62,8 @@ public:
 		void reColour(int r, int g, int b);
 
 		PlyFile colourThreshold(Eigen::Vector3i colour, double threshold, std::string filename);
+
+		double curvatureAtPoint(int index);
 
 		void clear();
 

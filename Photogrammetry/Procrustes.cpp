@@ -10,9 +10,9 @@ void Procrustes::removeTranslation(){
 	secondShape.translateToOrigin(secondShape.centroid());
 }
 
-void Procrustes::write(){
-	firstShape.write("Procrustes1st.ply");
-	secondShape.write("Procrustes2nd.ply");
+void Procrustes::write(std::string fst, std::string snd){
+	firstShape.write(fst);
+	secondShape.write(snd);
 }
 
 
@@ -28,5 +28,14 @@ void Procrustes::removeRotation(){
 	//we fix the second shape.
 	//use least squares fitting to match the eigen vectors
 
+
+}
+
+PlyFile Procrustes::getFirst(){
+	return firstShape;
+}
+
+PlyFile Procrustes::getSecond(){
+	return secondShape;
 
 }

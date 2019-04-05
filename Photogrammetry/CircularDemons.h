@@ -19,8 +19,10 @@ private:
 
 public:
 
-	CircularDemons(PlyFile fixedHull, PlyFile dynamicHull, PlyFile fixedStone, PlyFile dynamicStone);
+	CircularDemons(PlyFile fixedHull, PlyFile dynamicHull, PlyFile fixedStone, PlyFile dynamicStone);\
 
+	Vertex closestPoint(Eigen::Vector3d fix, PlyFile dyn);
+	double error(PlyFile fixedP, PlyFile dynP);
 	void run();
 
 

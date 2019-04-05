@@ -11,25 +11,118 @@ CircularDemons::CircularDemons(PlyFile fHull, PlyFile dHull, PlyFile fSurface, P
 
 
 
+
+
 void CircularDemons::run(){
 	//compute the curvature along each convex hull. Append this curvature to the respective points.
 
 	//project the points to the circle
 	std::vector<Vertex> projections;
+
+	std::vector<Vertex> dynamicProjections;
 	for(int i =0 ; i < fixedHull.size(); i++){
 		std::cout << i << std::endl;
 		Eigen::Vector3d p = fixedHull[i].location;
+		double curvature = fixedHull.curvatureAtPoint(i);
 		std::cout << p << std::endl;
+		std::cout << curvature << std::endl;
 		Eigen::Vector3d proj = fixedCircle.projectToCircle(p);
-	//	double t = atan(p[1]/p[2]);
-		//Eigen::Vector3d toCircum(1, 0, t);
-		//std::cout << toCircum << std::endl;
+
 		Vertex v;
 		v.location = proj;
+		v.curvature = curvature;
 		projections.push_back(v);
 
 	}
-	PlyFile pro(projections);
-	pro.write("CircleProjection.ply");
+
+	for(int i =0 ; i < dynamicHull.size(); i++){
+		Eigen::Vector3d p = dynamicHull[i].location;
+		double curvature = dynamicHull.curvatureAtPoint(i);
+		Eigen::Vector3d proj = dynamicCircle.projectToCircle(p);
+
+		Vertex v;
+		v.location = proj;
+		v.curvature = curvature;
+		dynamicProjections.push_back(v);
+	}
+
+	PlyFile fixedPro(projections);
+	fixedPro.write("CircleProjection.ply");
+	PlyFile dynPro(dynamicProjections);
+	dynPro.write("DynamicCircProj.ply");
+	//pro.write("CircleProjection.ply");
+
+	//here we rotate, incrementally by one degree
+	Eigen::Matrix3d rotations;
+	double smallestError = std::numeric_limits<double>::infinity();
+	double bestRotation = 0;
+	for(int i = 0 ; i < 360; i++){
+		//rotate dynamic circle by one degree
+		Eigen::AngleAxis<double> angle(i*M_PI/180,Eigen::Vector3d(1,0, 0) );
+		rotations = angle;
+		dynPro.rotateCloud(rotations);
+
+		//for each projected point, i.e., dynPro, find closest point in fixedProjection.
+		double e = error(fixedPro, dynPro);
+		std::cout << i << std::endl;
+		std::cout << e << std::endl;
+		if(e < smallestError){
+			smallestError = e;
+			bestRotation = i;
+		}
+
+	}
+	std::cout << bestRotation << std::endl;
+
+	Eigen::AngleAxis<double> angle(bestRotation*M_PI/180, Eigen::Vector3d(1,0,0));
+	rotations = angle;
+	dynPro.rotateCloud(rotations);
+	dynPro.write("CirleDynamic.ply");
+	dynamicHull.rotateCloud(rotations);
+	dynamicSurface.rotateCloud(rotations);
+
+	fixedSurface.write("CircularDemonsStatic.ply");
+	dynamicHull.write("CircularDemonsDynamicHull.ply");
+	dynamicSurface.write("CircularDemonsDynamicSurface.ply");
 
 }
+
+
+double CircularDemons::error(PlyFile fixedPro, PlyFile dynPro){
+	double error;
+	for(int i =0 ; i < fixedPro.size(); i++){
+		Vertex v = closestPoint(fixedPro[i].location, dynPro);
+		error += fixedPro[i].curvature - v.curvature;
+	}
+	return abs(error);
+
+}
+
+Vertex CircularDemons::closestPoint(Eigen::Vector3d l, PlyFile dynPro){
+	int closestIndex;
+
+		double closestPointDistance = std::numeric_limits<double>::infinity();
+		for(int j = 0 ; j < dynPro.size(); j++){
+			Eigen::Vector3d fD = l - dynPro[j].location;
+			double currentDistance = fD.norm();
+			if(currentDistance < closestPointDistance){
+				closestIndex = j;
+				closestPointDistance = currentDistance;
+			}
+		}
+
+	return dynPro[closestIndex];
+}
+/**
+for(int i = 0; i < dynamicPoints.size(); i++){
+	Vector3d p = dynamicPoints[i].location;
+
+	closestPointDistance = std::numeric_limits<double>::infinity();
+	for(int j = 0; j < staticPoints.size(); j++){
+		currentDistance   = EuclideanDistance(p, staticPoints[j].location);
+		if(currentDistance < closestPointDistance){
+			closestPoints[i] = staticPoints[j];
+			closestPointDistance = currentDistance;
+		}
+	}
+*/
