@@ -12,7 +12,7 @@
 #include "Surface.h"
 #include "Procrustes.h"
 #include "CircularDemons.h"
-
+#include "CubicSpline.h"
 
 /* Helper method to create a rotation matrix as Eigen is a bit weird with this.
  *
@@ -90,11 +90,12 @@ void computeDemons(){
 
 	PlyFile staticHull("StaticHull.ply");
 	PlyFile dynamicHull("DynamicHull.ply");
-
+	CubicSpline c(staticHull);
+	c.computeSpline();
 	//Surface vent(ventral, vPlane);
 	//vent.rotate(0,0);
 
-	PlyFile ventral2("RotatedVentral2.ply");
+/**	PlyFile ventral2("RotatedVentral2.ply");
 	Plane ventralPlane3(venPlane);
 	Plane dorsalPlane3(dorPlane);
 
@@ -106,7 +107,7 @@ void computeDemons(){
 
 
 	CircularDemons cDemon(hull.getFirst(), hull.getSecond(), p.getFirst(), p.getSecond());
-	cDemon.run();
+	cDemon.run();*/
 }
 
 void filter(std::string Ventral, std::string Dorsal){

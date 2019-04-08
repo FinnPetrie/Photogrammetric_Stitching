@@ -82,7 +82,7 @@ void CircularDemons::run(){
 	dynamicSurface.rotateCloud(rotations);
 
 	fixedSurface.write("CircularDemonsStatic.ply");
-	dynamicHull.write("CircularDemonsDynamicHull.ply");
+	dynamicHull.write("CircularDemonsDynamic.ply");
 	dynamicSurface.write("CircularDemonsDynamicSurface.ply");
 
 }
