@@ -162,6 +162,28 @@ Vertex PlyFile::getRandomPoint(){
 	return v;
 }
 
+Eigen::Vector3d PlyFile::closestPoint(Vertex x){
+	double closestDistance = std::numeric_limits<double>::infinity();
+	int index = -1;
+	for(int i = 0; i < size(); i++){
+		if(x.EuclideanDistance(points_[i]) < closestDistance){
+			closestDistance = x.EuclideanDistance(points_[i]);
+			index = i;
+		}
+	}
+
+	return points_[index].location;
+
+}
+void PlyFile::order(){
+	//order according to the first element
+	Vertex first = points_[0];
+	//find the next point -- i.e., the closest point
+	for(int i = 0 ; i < size(); i++){
+
+
+	}
+}
 
 void PlyFile::augment(PlyFile aug){
 	for(int i = 0; i < aug.size(); i++){

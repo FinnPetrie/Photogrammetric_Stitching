@@ -6,12 +6,16 @@
 class CubicSpline{
 private:
 	PlyFile points;
+	double* fillA(int n, int axis);
 
 public:
 
 	CubicSpline(PlyFile points);
 	std::vector<Eigen::Vector4d> computeSpline();
 
+	std::vector<Eigen::Vector4d> computeSplines();
+
+	void drawSplines(std::vector<Eigen::Vector4d> splines);
 
 };
 

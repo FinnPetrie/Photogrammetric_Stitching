@@ -20,6 +20,13 @@
 			std::cout << normal << std::endl;
 		}
 
+		double EuclideanDistance(Vertex s){
+			Eigen::Vector3d tV = this->location;
+			Eigen::Vector3d sV = s.location;
+
+			return (tV - sV).norm();
+		}
+
 		const bool operator ==(Vertex v){
 			if((this->location == v.location) && (this->colour == v.colour) && (this->normal == v.normal)){
 				return true;
@@ -33,7 +40,7 @@ class PlyFile{
 private:
 
 		std::vector<Vertex> points_;
-
+		Eigen::Vector3d closestPoint(Vertex x);
 
 public:
 
@@ -65,7 +72,11 @@ public:
 
 		double curvatureAtPoint(int index);
 
+		void order();
+
 		void clear();
+
+
 
 		Eigen::Matrix3d changeOfBasis(Eigen::Matrix3d toBasis, Eigen::Matrix3d fromBasis);
 

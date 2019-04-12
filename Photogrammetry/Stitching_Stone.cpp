@@ -91,6 +91,7 @@ void computeDemons(){
 	PlyFile staticHull("StaticHull.ply");
 	PlyFile dynamicHull("DynamicHull.ply");
 	CubicSpline c(staticHull);
+
 	c.computeSpline();
 	//Surface vent(ventral, vPlane);
 	//vent.rotate(0,0);
@@ -110,6 +111,13 @@ void computeDemons(){
 	cDemon.run();*/
 }
 
+
+void splineTest(){
+	PlyFile splineTest("splinetest.ply");
+	CubicSpline c(splineTest);
+	c.computeSplines();
+}
+
 void filter(std::string Ventral, std::string Dorsal){
 	PlyFile ventral(Ventral);
 	PlyFile dorsal(Dorsal);
@@ -121,7 +129,10 @@ void filter(std::string Ventral, std::string Dorsal){
 }
 int main(void) {
 	//filter("Ventral_Fused.ply", "Dorsal_Fused.ply");
-	computeDemons();
+	//computeDemons();
+	splineTest();
+
+
 
 	return 0;
 }
