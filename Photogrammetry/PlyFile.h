@@ -48,6 +48,12 @@ public:
 		PlyFile(std::string pathToPly);
 		PlyFile();
 
+		void swap(int i, int j);
+
+		void sortAlongAxis(int axis, int low, int high);
+
+		int partition(int axis, int high, int low);
+
 		bool read(const std::string& filename);
 
 		bool write(const std::string& filename);

@@ -2,6 +2,7 @@
 #define CUBICSPLINE_H_
 
 #include "PlyFile.h"
+#include "spline.h"
 
 class CubicSpline{
 private:

@@ -92,7 +92,7 @@ void computeDemons(){
 	PlyFile dynamicHull("DynamicHull.ply");
 	CubicSpline c(staticHull);
 
-	c.computeSpline();
+	//c.computeSpline();
 	//Surface vent(ventral, vPlane);
 	//vent.rotate(0,0);
 
@@ -130,7 +130,13 @@ void filter(std::string Ventral, std::string Dorsal){
 int main(void) {
 	//filter("Ventral_Fused.ply", "Dorsal_Fused.ply");
 	//computeDemons();
-	splineTest();
+	//splineTest();
+	PlyFile dynamic("DynamicSurface.ply");
+	//std::cout << "Size YO : " << dynamic.size();
+	int size = dynamic.size();
+	//std:: cout << (size)/2;
+	dynamic.sortAlongAxis(1, 0, size);
+	//dynamic.write("SortedDynamic.ply");
 
 
 

@@ -5,7 +5,7 @@ CubicSpline::CubicSpline(PlyFile p) : points(p){
 }
 
 
-std::vector<Eigen::Vector4d> CubicSpline::computeSplineYZPlane(std::string t){
+/**std::vector<Eigen::Vector4d> CubicSpline::computeSplineYZPlane(std::string t){
 		//create a new array of size n + 1
 	int n = points.size();
 	std::cout << "This is n: " <<  n << std::endl;
@@ -93,7 +93,7 @@ std::vector<Eigen::Vector4d> CubicSpline::computeSplineYZPlane(std::string t){
 		std::cout << b[i] << std::endl;
 		std::cout << c[i] << std::endl;
 		std::cout << d[i] << std::endl;
-		*/
+		*
 	}
 	drawSplinesYZ(outputSpline, t);
 
@@ -101,6 +101,8 @@ std::vector<Eigen::Vector4d> CubicSpline::computeSplineYZPlane(std::string t){
 
 
 }
+
+
 std::vector<Eigen::Vector4d> CubicSpline::computeSpline(){
 		//create a new array of size n + 1
 	int n = points.size();
@@ -189,7 +191,7 @@ std::vector<Eigen::Vector4d> CubicSpline::computeSpline(){
 		std::cout << b[i] << std::endl;
 		std::cout << c[i] << std::endl;
 		std::cout << d[i] << std::endl;
-		*/
+
 	}
 
 	drawSplines(outputSpline,  0, "Test.ply");
@@ -198,16 +200,10 @@ std::vector<Eigen::Vector4d> CubicSpline::computeSpline(){
 
 
 }
+*/
 
-double* CubicSpline::fillA(int n, int axis){
-	double a[n];
-	for(int i =0 ; i < n; i++){
-		Eigen::Vector3d yJ = points[i].location;
-		double y = yJ[axis];
-		a[i] = y;
-	}
-	return a;
-}
+
+
 
 std::vector<Eigen::Vector4d> CubicSpline::computeSplines(int axis, std::string t){
 	int n = points.size();
@@ -294,14 +290,14 @@ void CubicSpline::drawSplines(std::vector<Eigen::Vector4d> splines, int axis, st
 	//get the corresponding piecewise polynomial, i.e., splines[i]
 	//draw points at x incremental intervals.
 	std::vector<Vertex>  splinePoints;
-	std::cout << "Size of the splines : " <<  splines.size() << std::endl;
-	for(int i = 0; i < points.size(); i++){
+	std::cout << "Size of the splines : " <<  splines.size()  << std::endl;
+	for(int i = 0; i <= points.size() ; i++){
 		std::cout << splines[i] << std::endl;
-		std::cout << "Our i : " << i << std::endl;
+		//std::cout << "Our i : " << i << std::endl;
 
 		double measure  = points[i+1].location[axis] - points[i].location[axis];
-		std::cout << measure << std::endl;
-		for(double x = 0.0; x < measure; x+= 0.01){
+		//std::cout << measure << std::endl;
+		for(double x = 0.0; x <= measure; x+= 0.001){
 			Vertex v;
 			Eigen::Vector3d point;
 			Eigen::Vector4d polynomial = splines[i];
@@ -309,13 +305,15 @@ void CubicSpline::drawSplines(std::vector<Eigen::Vector4d> splines, int axis, st
 			double x1 = x + points[i].location[axis];
 			double evaluate =(x1 - points[i].location[axis]);
 			double y = pow(evaluate, 3)*polynomial[3] + pow(evaluate, 2)*polynomial[2] + evaluate*polynomial[1] + polynomial[0];
-		std::cout <<  "This is f(x): " << y << std::endl;
+		//std::cout <<  "This is f(x): " << y << std::endl;
 
-			std::cout << x1 << " our x " << std::endl;
+		//	std::cout << x1 << " our x " << std::endl;
 			point[(axis+2)%3] = 0;
 			point[axis] = x1;
 			point[(axis+1)%3] = y;
 			v.location = point;
+			v.colour = Eigen::Vector3i(0, 255, 0);
+			v.normal = Eigen::Vector3d(0,0,0);
 			splinePoints.push_back(v);
 		}
 
@@ -349,7 +347,7 @@ void CubicSpline::approximateHull(){
 	computeSplines(1, "NegativeSpline.ply");
 
 	PlyFile posSpline("PositiveSpline.ply");
-	//posSpline.rotateAxisAboutPoint(0,1, cent);
+	posSpline.rotateAxisAboutPoint(0,1, cent);
 	posSpline.write("PositiveSpline.ply");
 
 }

@@ -224,6 +224,39 @@ bool PlyFile::read(const std::string& filename){
 	return true;
 }
 
+void PlyFile::sortAlongAxis(int axis, int low, int high){
+	if (low < high){
+		//std::cout << low;
+		int p = partition(axis, low, high -1);
+		sortAlongAxis(axis, low, p);
+		sortAlongAxis(axis, p + 1, high);
+	}
+
+}
+
+
+int PlyFile::partition(int axis, int low, int high){
+	Eigen::Vector3d pivot = points_[low].location;
+
+	int leftwall = low;
+	for(int i = low + 1; i < high; i++){
+		if(points_[i].location(axis) < pivot(axis)){
+			swap(i, leftwall+1);
+			leftwall++;
+		}
+	}
+	swap(low, leftwall);
+	return leftwall;
+
+
+
+}
+
+void PlyFile::swap(int i, int j){
+	Vertex v = points_[i];
+	points_[i] = points_[j];
+	points_[j] = v;
+}
 bool PlyFile::write(const std::string& filename){
 
 	std::ofstream fout(filename);
@@ -247,7 +280,8 @@ bool PlyFile::write(const std::string& filename){
 	    << "end_header\n";
 
 	    for (size_t ix = 0; ix < size(); ++ix) {
-	        fout << points_[ix].location << " " << points_[ix].normal << " " << points_[ix].colour << "\n";
+	        fout << points_[ix].location(0) << " " << points_[ix].location(1)<< " " << points_[ix].location(2) << " " << points_[ix].normal(0) << " " << points_[ix].normal(1) << " " << points_[ix].normal(2) << " "  << points_[ix].colour(0) << " " << points_[ix].colour(1) << " "<< points_[ix].colour(2) << "\n";
+	      // std::cout << "Points: " << points_[ix].location << " normals : " << points_[ix].normal << " " << 255 <<  " " << 0 << " " << 0 << "\n";
 	    }
 
 	    fout.close();
