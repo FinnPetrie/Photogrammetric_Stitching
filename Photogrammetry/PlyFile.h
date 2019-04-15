@@ -94,6 +94,14 @@ public:
 
 		void rotateOrigin(Eigen::Matrix3d rotation);
 
+		void orientateAroundYAxis();
+
+		void rotateAxisAboutPoint(int axis, double amount, Eigen::Vector3d point);
+
+
+		std::vector<Vertex> collectPositiveVertices(int axis);
+		std::vector<Vertex> collectNegativeVertices(int axis);
+
 		Eigen::Matrix3d covariance();
 
 		void augment(PlyFile toAugment);

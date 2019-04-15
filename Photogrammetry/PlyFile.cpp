@@ -378,6 +378,25 @@ void PlyFile::rotateAxis(int axis, double amount){
 	 rotateOrigin(m);
 }
 
+void PlyFile::rotateAxisAboutPoint(int axis, double amount, Eigen::Vector3d point){
+	Eigen::Matrix3d cov = covariance();
+	Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> covEigens(cov);
+	//std::cout << "The eigenvalues of A are: \n" << covEigens.eigenvalues() << std::endl;
+	//std::cout << "Here's a matrix whose columns are eigenvectors of A \n"
+	//        << "corresponding to these eigenvalues:\n"
+	//        << covEigens.eigenvectors() << std::endl;
+
+	////std::cout << "\n\n\"" << std::endl;
+	//std::cout << cov << std::endl;
+	//std::cout << "The second eigenvector of the 3x3 covariance matrix is:"
+	   //  << std::endl << covEigens.eigenvectors().col(2) << std::endl;
+
+	 Eigen::Matrix3d m;
+	 m = Eigen::AngleAxisd(amount*M_PI, covEigens.eigenvectors().col(axis));
+
+	 rotateAboutPoint(m, point);
+}
+
 
 Eigen::Matrix3d PlyFile::changeOfBasis(Eigen::Matrix3d toBasis, Eigen::Matrix3d fromBasis){
 		Eigen::Matrix3d fromBasisInv = fromBasis.inverse();
@@ -398,6 +417,49 @@ void PlyFile::representUnderChangeBasis(Eigen::Matrix3d toBasis, Eigen::Matrix3d
 	}
 
 }
+
+
+std::vector<Vertex> PlyFile::collectPositiveVertices(int axis){
+	std::vector<Vertex> positives;
+
+	for(int i =0 ; i < size(); i++){
+		if(points_[i].location(axis) >= 0){
+			positives.push_back(points_[i]);
+		}
+	}
+
+	return positives;
+}
+
+std::vector<Vertex> PlyFile::collectNegativeVertices(int axis){
+	std::vector<Vertex> negatives;
+
+	for(int i =0 ; i < size(); i++){
+		if(points_[i].location(axis) < 0){
+			negatives.push_back(points_[i]);
+		}
+	}
+
+	return negatives;
+}
+
+void PlyFile::orientateAroundYAxis(){
+	//compute covariance.
+	Eigen::Matrix3d cov = covariance();
+	Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> covEigens(cov);
+	Eigen::Matrix3d currentBasis = covEigens.eigenvectors();
+
+	Eigen::Matrix3d identity;
+	//swap Y and Z
+	identity << 1, 0, 0,
+				0, 0, 1,
+				0, 1 ,0;
+
+	representUnderChangeBasis(identity, currentBasis, centroid());
+
+
+}
+
 
 PlyFile PlyFile::colourThreshold(Eigen::Vector3i colour, double threshold, std::string filename ){
 	PlyFile colourFiltered;

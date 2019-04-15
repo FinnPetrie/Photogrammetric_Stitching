@@ -113,9 +113,9 @@ void computeDemons(){
 
 
 void splineTest(){
-	PlyFile splineTest("splinetest.ply");
+	PlyFile splineTest("StaticHull.ply");
 	CubicSpline c(splineTest);
-	c.computeSplines();
+	c.approximateHull();
 }
 
 void filter(std::string Ventral, std::string Dorsal){

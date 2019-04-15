@@ -13,9 +13,13 @@ public:
 	CubicSpline(PlyFile points);
 	std::vector<Eigen::Vector4d> computeSpline();
 
-	std::vector<Eigen::Vector4d> computeSplines();
+	std::vector<Eigen::Vector4d> computeSplines(int axis, std::string t);
 
-	void drawSplines(std::vector<Eigen::Vector4d> splines);
+	std::vector<Eigen::Vector4d> computeSplineYZPlane(std::string t);
+	std::vector<Eigen::Vector4d> computeSplinesYZ(std:: string t);
+	void drawSplines(std::vector<Eigen::Vector4d> splines, int axis, std::string t);
+	void drawSplinesYZ(std::vector<Eigen::Vector4d> splines, std::string t);
+	void approximateHull();
 
 };
 
