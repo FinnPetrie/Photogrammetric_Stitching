@@ -227,7 +227,7 @@ bool PlyFile::read(const std::string& filename){
 void PlyFile::sortAlongAxis(int axis, int low, int high){
 	if (low < high){
 		//std::cout << low;
-		int p = partition(axis, low, high -1);
+		int p = partition(axis, low, high);
 		sortAlongAxis(axis, low, p);
 		sortAlongAxis(axis, p + 1, high);
 	}
@@ -255,6 +255,7 @@ int PlyFile::partition(int axis, int low, int high){
 void PlyFile::swap(int i, int j){
 	Vertex v = points_[i];
 	points_[i] = points_[j];
+
 	points_[j] = v;
 }
 bool PlyFile::write(const std::string& filename){

@@ -336,6 +336,8 @@ void CubicSpline::approximateHull(){
 	PlyFile pos(positives);
 	pos.rotateAxis(0, 1);
 	PlyFile neg(negatives);
+	neg.sortAlongAxis(1, 0, neg.size());
+
 	neg.write("Negative.ply");
 	points = pos;
 	//move negative components to the top, i.e., rotation by 180,
@@ -358,7 +360,7 @@ void CubicSpline::drawSplinesYZ(std::vector<Eigen::Vector4d> splines, std::strin
 	//draw points at x incremental intervals.
 	std::vector<Vertex>  splinePoints;
 	std::cout << "Size of the splines : " <<  splines.size() << std::endl;
-	for(int i = 0; i < points.size(); i++){
+	for(int i = 0; i < points.size() -1; i++){
 		std::cout << splines[i] << std::endl;
 		std::cout << "Our i : " << i << std::endl;
 		double measure  = points[i+1].location[1] - points[i].location[1];

@@ -13,6 +13,8 @@
 #include "Procrustes.h"
 #include "CircularDemons.h"
 #include "CubicSpline.h"
+#include "spline.h"
+#include <cmath>
 
 /* Helper method to create a rotation matrix as Eigen is a bit weird with this.
  *
@@ -127,18 +129,135 @@ void filter(std::string Ventral, std::string Dorsal){
 
 
 }
+
+void splineTestTwo(){
+	PlyFile staticHull("StaticHull.ply");
+	staticHull.orientateAroundYAxis();
+	std::vector<Vertex> neg = staticHull.collectNegativeVertices(2);
+	PlyFile negatives(neg);
+	negatives.write("AxisAlignedNegatives.ply");
+	int size = negatives.size();
+	negatives.sortAlongAxis(1, 0, size);
+	negatives.write("NegativesSortedY.ply");
+		std::vector<double> x;
+		std::vector<double> y;
+
+		std::vector<Vertex> pos = staticHull.collectPositiveVertices(2);
+		PlyFile positives(pos);
+		positives.sortAlongAxis(1, 0, pos.size());
+
+		std::vector<double> xPos;
+		std::vector<double> yPos;
+
+		for(int i =0 ; i < positives.size(); i++){
+			xPos.push_back(positives[i].location[1]);
+			yPos.push_back(positives[i].location[2]);
+
+
+		}
+
+
+
+		for(int i = 0; i < negatives.size(); i++){
+			//std::cout << negatives[i].location(1) << std::endl;
+		//std::cout << negatives[i].location(2) << std::endl;
+			x.push_back(negatives[i].location[1]);
+
+			y.push_back(negatives[i].location[2]);
+
+		}
+
+
+
+		/**for(int i = 0; i < x.size(); i++){
+			std::cout << x[i] << std::endl;
+		}
+		for(int i = 0; i < y.size(); i++){
+			std::cout << y[i] << std::endl;
+		}
+		*/
+		tk::spline sNeg;
+
+		sNeg.set_points(x, y);
+		std::vector<Vertex> vertices;
+		/**
+		for(int i =0 ;i < size-1; i++){
+			//std::cout <<  "In here" << std::endl;
+			//std::cout << negatives.size();
+			std::cout << "Next value in x vector : " << x[i+1] << std::endl;
+			std::cout << "Current value in x vector : " <<  x[i] << std::endl;
+			double difference = abs(x[i+1] - x[i]);
+
+			for(double x1 = 0.0; x1 < difference; x1+= 0.001){
+				Vertex v;
+				Eigen::Vector3d point;
+				std::cout << "Our x increment : " << x1 << std::endl;
+				std::cout << "Our spline interpolation : " << s(x1) << std::endl;
+
+				point[0] = 0;
+				point[1] = x1 + x[i];
+				point[2] = s(x1 + x[i]);
+				v.location = point;
+
+				vertices.push_back(v);
+
+
+			}
+			std:: cout << "Difference between next and current value " << difference  << std::endl;
+
+		}
+		*/
+
+
+			//first point
+			// draw a set number of points between
+			//next point.
+
+		tk::spline sPos;
+		sPos.set_points(xPos, yPos);
+
+		for(double x1 = x[0]; x1 < abs(x[size] - x[0]); x1 += 0.001){
+			std::cout << x1 << std::endl;
+
+
+			Vertex v;
+			Eigen::Vector3d point;
+			point[0] = 0;
+			point[1] = x1;
+			point[2] = sNeg(x1);
+
+			v.location = point;
+
+			vertices.push_back(v);
+		}
+
+
+		PlyFile negInterp(vertices);
+		negInterp.write("NegInterp.ply");
+
+
+		std::vector<Vertex> posVertices;
+
+		for(double x1Pos = xPos[0]; x1Pos < abs(xPos[size] - xPos[0]); x1Pos += 0.001){
+			Vertex v;
+			Eigen::Vector3d point;
+			point[0] = 0;
+			point[1] = x1Pos;
+			point[2] = sPos(x1Pos);
+
+			v.location = point;
+			posVertices.push_back(v);
+		}
+
+		PlyFile posInterp(posVertices);
+		posInterp.write("PosInterp.ply");
+
+}
+
+
 int main(void) {
-	//filter("Ventral_Fused.ply", "Dorsal_Fused.ply");
-	//computeDemons();
+
+	splineTestTwo();
 	//splineTest();
-	PlyFile dynamic("DynamicSurface.ply");
-	//std::cout << "Size YO : " << dynamic.size();
-	int size = dynamic.size();
-	//std:: cout << (size)/2;
-	dynamic.sortAlongAxis(1, 0, size);
-	//dynamic.write("SortedDynamic.ply");
-
-
-
 	return 0;
 }
