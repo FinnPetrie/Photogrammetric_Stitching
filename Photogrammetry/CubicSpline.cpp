@@ -2,6 +2,7 @@
 #include <eigen3/Eigen/Core>
 
 CubicSpline::CubicSpline(PlyFile p) : points(p){
+
 }
 
 
@@ -276,6 +277,7 @@ std::vector<Eigen::Vector4d> CubicSpline::computeSplines(int axis, std::string t
 		coefficients.push_back(coeffs);
 	}
 
+	splines = coefficients;
 	drawSplines(coefficients, axis, t);
 	return coefficients;
 
@@ -323,8 +325,172 @@ void CubicSpline::drawSplines(std::vector<Eigen::Vector4d> splines, int axis, st
 	p.write(t);
 }
 
+void CubicSpline::runLib(std::string s){
+		points.orientateAroundYAxis();
+		points.sortAlongAxis(1, 0, points.size());
+
+		std::vector<Vertex> neg = points.collectNegativeVertices(2);
+		PlyFile negatives(neg);
+		int size = negatives.size();
+		negatives.sortAlongAxis(1, 0, size);
+		negatives.write("NegativesSortedY.ply");
+			std::vector<double> x;
+			std::vector<double> y;
+
+			std::vector<Vertex> pos = points.collectPositiveVertices(2);
+			PlyFile positives(pos);
+			positives.sortAlongAxis(1, 0, pos.size());
+
+			//attempt to interpolate between the positive and negative interpolation
+			//negatives.push_back(positives[0]);
+			//negatives.push_back(positives[positives.size()]);
+			//negatives.sortAlongAxis(1,0, negatives.size());
+
+			std::vector<double> xPos;
+			std::vector<double> yPos;
+
+			for(int i =0 ; i < positives.size(); i++){
+				xPos.push_back(positives[i].location[1]);
+				yPos.push_back(positives[i].location[2]);
 
 
+			}
+
+
+
+			for(int i = 0; i < negatives.size(); i++){
+				//std::cout << negatives[i].location(1) << std::endl;
+			//std::cout << negatives[i].location(2) << std::endl;
+				x.push_back(negatives[i].location[1]);
+
+				y.push_back(negatives[i].location[2]);
+
+			}
+
+
+
+			tk::spline sNeg;
+
+			sNeg.set_points(x, y);
+			std::vector<Vertex> vertices;
+			/**
+			for(int i =0 ;i < size-1; i++){
+				//std::cout <<  "In here" << std::endl;
+				//std::cout << negatives.size();
+				std::cout << "Next value in x vector : " << x[i+1] << std::endl;
+				std::cout << "Current value in x vector : " <<  x[i] << std::endl;
+				double difference = abs(x[i+1] - x[i]);
+
+				for(double x1 = 0.0; x1 < difference; x1+= 0.001){
+					Vertex v;
+					Eigen::Vector3d point;
+					std::cout << "Our x increment : " << x1 << std::endl;
+					std::cout << "Our spline interpolation : " << s(x1) << std::endl;
+
+					point[0] = 0;
+					point[1] = x1 + x[i];
+					point[2] = s(x1 + x[i]);
+					v.location = point;
+
+					vertices.push_back(v);
+
+
+				}
+				std:: cout << "Difference between next and current value " << difference  << std::endl;
+
+			}
+			*/
+
+
+				//first point
+				// draw a set number of points between
+				//next point.
+
+			tk::spline sPos;
+			sPos.set_points(xPos, yPos);
+
+			for(double x1 = x[0]; x1 < abs(x[negatives.size()] - x[0]); x1 += 0.001){
+				std::cout << x1 << std::endl;
+
+
+				Vertex v;
+				Eigen::Vector3d point;
+				point[0] = 0;
+				point[1] = x1;
+				point[2] = sNeg(x1);
+
+				v.location = point;
+
+				vertices.push_back(v);
+			}
+
+			//for each interval
+
+
+			PlyFile negInterp(vertices);
+			negInterp.write(s +"NegInterp.ply");
+
+
+			std::vector<Vertex> posVertices;
+
+
+			/**
+			for(int i = 0; i < positives.size(); i++){
+					double nextY = y[i+1];
+
+					do{
+						double x1 = x[i];
+						double y = sNeg(x1);
+						Vertex v;
+						Eigen::Vector3d point;
+						point[0] = 0;
+						point[1] = x1;
+						point[2] = y;
+						v.location = point;
+						posVertices.push_back(v);
+						x1 += 0.001;
+					}while(y != nextY);
+				}*/
+
+
+			for(double x1Pos = xPos[0]; x1Pos < abs(xPos[positives.size()] - xPos[0]); x1Pos += 0.001){
+				Vertex v;
+				Eigen::Vector3d point;
+				point[0] = 0;
+				point[1] = x1Pos;
+				point[2] = sPos(x1Pos);
+
+				v.location = point;
+				posVertices.push_back(v);
+			}
+
+			PlyFile posInterp(posVertices);
+			posInterp.write(s + "PosInterp.ply");
+
+}
+
+
+double CubicSpline::evaluateAt(double x, int axis){
+	double low = points[0].location[axis];
+	double high = points[points.size()].location[axis];
+	if(x >= low && x <= high){
+		for(int i =0 ; i < splines.size(); i++){
+			if(x >= points[i].location[axis] && x <= points[i].location[axis]){
+				Eigen::Vector4d polynomial = splines[i];
+				//get point w.r.t the last point.
+				double x1 = x - points[i].location[axis];
+				//evaluate
+				double y = pow(x1, 3)*polynomial[3] + pow(x1, 2)*polynomial[2] + x1*polynomial[1] + polynomial[0];
+
+				return y;
+			}
+		}
+	}
+
+	return 0;
+
+	//find the interval of f.
+}
 void CubicSpline::approximateHull(){
 	//reorientate Hull in terms of its greater principle component.
 	points.orientateAroundYAxis();
@@ -334,9 +500,10 @@ void CubicSpline::approximateHull(){
 	std::vector<Vertex> negatives = points.collectNegativeVertices(2);
 
 	PlyFile pos(positives);
-	pos.rotateAxis(0, 1);
+	//pos.rotateAxis(0, 1);
 	PlyFile neg(negatives);
-	neg.sortAlongAxis(1, 0, neg.size());
+
+	//neg.sortAlongAxis(1, 0, neg.size());
 
 	neg.write("Negative.ply");
 	points = pos;
@@ -351,8 +518,9 @@ void CubicSpline::approximateHull(){
 	PlyFile posSpline("PositiveSpline.ply");
 	posSpline.rotateAxisAboutPoint(0,1, cent);
 	posSpline.write("PositiveSpline.ply");
-
 }
+
+
 void CubicSpline::drawSplinesYZ(std::vector<Eigen::Vector4d> splines, std::string t){
 
 	//go over each spline on the interval xi -> xi + 1
@@ -385,8 +553,6 @@ void CubicSpline::drawSplinesYZ(std::vector<Eigen::Vector4d> splines, std::strin
 		}
 
 	}
-
-
 	PlyFile p(splinePoints);
 	p.write(t);
 }

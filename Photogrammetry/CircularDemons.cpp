@@ -1,5 +1,7 @@
 #include "CircularDemons.h"
 #include <cmath>
+#include "CubicSpline.h"
+
 
 CircularDemons::CircularDemons(PlyFile fHull, PlyFile dHull, PlyFile fSurface, PlyFile dSurface): fixedHull(fHull), dynamicHull(dHull), fixedSurface(fSurface), dynamicSurface(dSurface){
 	Eigen::Vector3d centre = fixedHull.centroid();
@@ -12,6 +14,38 @@ CircularDemons::CircularDemons(PlyFile fHull, PlyFile dHull, PlyFile fSurface, P
 
 
 
+
+void CircularDemons::runSpline(){
+	//split into positive and negative surfaces.
+
+	//CubicSpline c;
+
+	std::vector<Vertex> fixedPositive = fixedHull.collectPositiveVertices(2);
+	std::vector<Vertex> fixedNegative = fixedHull.collectNegativeVertices(2);
+
+	PlyFile fixedPos(fixedPositive);
+	PlyFile fixedNeg(fixedNegative);
+
+	fixedPos.write("FixedPos.ply");
+	fixedNeg.write("FixedNeg.ply");
+
+	CubicSpline fixedSpline(fixedHull);
+	fixedSpline.computeSplines(1, "FixedSplines.ply");
+
+
+	//project the spline to the circle, we want this to be bijective.
+	//for a set of samples along the arclength of the circle, project the spline curve to that point, and associate curvature
+
+	for(int i = 0; i < 180; i++){
+		//take the ith value of the spline
+
+	}
+
+
+
+
+
+}
 
 void CircularDemons::run(){
 	//compute the curvature along each convex hull. Append this curvature to the respective points.

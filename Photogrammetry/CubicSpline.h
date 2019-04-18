@@ -8,6 +8,7 @@ class CubicSpline{
 private:
 	PlyFile points;
 	double* fillA(int n, int axis);
+	std::vector<Eigen::Vector4d> splines;
 
 public:
 
@@ -18,7 +19,11 @@ public:
 
 	std::vector<Eigen::Vector4d> computeSplineYZPlane(std::string t);
 	std::vector<Eigen::Vector4d> computeSplinesYZ(std:: string t);
+
+	double evaluateAt(double x, int axis);
 	void drawSplines(std::vector<Eigen::Vector4d> splines, int axis, std::string t);
+
+	void runLib(std::string s);
 	void drawSplinesYZ(std::vector<Eigen::Vector4d> splines, std::string t);
 	void approximateHull();
 

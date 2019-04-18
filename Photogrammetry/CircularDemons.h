@@ -4,7 +4,7 @@
 
 #include "Procrustes.h"
 #include "Circle.h"
-
+#include "spline.h"
 class CircularDemons{
 
 private:
@@ -24,6 +24,7 @@ public:
 	Vertex closestPoint(Eigen::Vector3d fix, PlyFile dyn);
 	double error(PlyFile fixedP, PlyFile dynP);
 	void run();
+	void runSpline();
 
 
 };

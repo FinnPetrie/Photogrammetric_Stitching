@@ -114,6 +114,28 @@ void computeDemons(){
 }
 
 
+void computeDemons2nd(){
+	PlyFile staticHull("StaticHull.ply");
+	PlyFile dynamicHull("DynamicHull.ply");
+
+	PlyFile dorsal("StaticSurface.ply");
+	PlyFile ventral("DynamicSurface.ply");
+
+	Procrustes p(dorsal, ventral);
+	p.removeTranslation();
+	Procrustes hull(staticHull, dynamicHull);
+	hull.removeTranslation();
+
+
+	CircularDemons cDemon(hull.getFirst(), hull.getSecond(), p.getFirst(), p.getSecond());
+	cDemon.runSpline();
+}
+
+
+
+
+
+
 void splineTest(){
 	PlyFile splineTest("StaticHull.ply");
 	CubicSpline c(splineTest);
@@ -133,9 +155,11 @@ void filter(std::string Ventral, std::string Dorsal){
 void splineTestTwo(){
 	PlyFile staticHull("StaticHull.ply");
 	staticHull.orientateAroundYAxis();
+	staticHull.sortAlongAxis(1, 0, staticHull.size());
+
+
 	std::vector<Vertex> neg = staticHull.collectNegativeVertices(2);
 	PlyFile negatives(neg);
-	negatives.write("AxisAlignedNegatives.ply");
 	int size = negatives.size();
 	negatives.sortAlongAxis(1, 0, size);
 	negatives.write("NegativesSortedY.ply");
@@ -145,6 +169,11 @@ void splineTestTwo(){
 		std::vector<Vertex> pos = staticHull.collectPositiveVertices(2);
 		PlyFile positives(pos);
 		positives.sortAlongAxis(1, 0, pos.size());
+
+		//attempt to interpolate between the positive and negative interpolation
+		//negatives.push_back(positives[0]);
+		//negatives.push_back(positives[positives.size()]);
+		//negatives.sortAlongAxis(1,0, negatives.size());
 
 		std::vector<double> xPos;
 		std::vector<double> yPos;
@@ -169,13 +198,6 @@ void splineTestTwo(){
 
 
 
-		/**for(int i = 0; i < x.size(); i++){
-			std::cout << x[i] << std::endl;
-		}
-		for(int i = 0; i < y.size(); i++){
-			std::cout << y[i] << std::endl;
-		}
-		*/
 		tk::spline sNeg;
 
 		sNeg.set_points(x, y);
@@ -216,7 +238,7 @@ void splineTestTwo(){
 		tk::spline sPos;
 		sPos.set_points(xPos, yPos);
 
-		for(double x1 = x[0]; x1 < abs(x[size] - x[0]); x1 += 0.001){
+		for(double x1 = x[0]; x1 < abs(x[negatives.size()] - x[0]); x1 += 0.001){
 			std::cout << x1 << std::endl;
 
 
@@ -231,6 +253,8 @@ void splineTestTwo(){
 			vertices.push_back(v);
 		}
 
+		//for each interval
+
 
 		PlyFile negInterp(vertices);
 		negInterp.write("NegInterp.ply");
@@ -238,7 +262,27 @@ void splineTestTwo(){
 
 		std::vector<Vertex> posVertices;
 
-		for(double x1Pos = xPos[0]; x1Pos < abs(xPos[size] - xPos[0]); x1Pos += 0.001){
+
+		/**
+		for(int i = 0; i < positives.size(); i++){
+				double nextY = y[i+1];
+
+				do{
+					double x1 = x[i];
+					double y = sNeg(x1);
+					Vertex v;
+					Eigen::Vector3d point;
+					point[0] = 0;
+					point[1] = x1;
+					point[2] = y;
+					v.location = point;
+					posVertices.push_back(v);
+					x1 += 0.001;
+				}while(y != nextY);
+			}*/
+
+
+		for(double x1Pos = xPos[0]; x1Pos < abs(xPos[positives.size()] - xPos[0]); x1Pos += 0.001){
 			Vertex v;
 			Eigen::Vector3d point;
 			point[0] = 0;
@@ -257,7 +301,8 @@ void splineTestTwo(){
 
 int main(void) {
 
-	splineTestTwo();
-	//splineTest();
+	//splineTestTwo();
+	computeDemons2nd();
+
 	return 0;
 }
