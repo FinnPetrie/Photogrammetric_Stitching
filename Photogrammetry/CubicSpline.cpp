@@ -1,210 +1,153 @@
 #include "CubicSpline.h"
 #include <eigen3/Eigen/Core>
-
+#include <eigen3/Eigen/Dense>
 CubicSpline::CubicSpline(PlyFile p) : points(p){
 
 }
 
 
-/**std::vector<Eigen::Vector4d> CubicSpline::computeSplineYZPlane(std::string t){
-		//create a new array of size n + 1
-	int n = points.size();
-	std::cout << "This is n: " <<  n << std::endl;
-	int k = n;
-
-	double a[n + 1];
-	double b [n];
-	double d [n];
-	double u[n];
-
-	//compute a values
-	for(int j = 0; j < points.size(); j++){
-		Eigen::Vector3d yJ = points[j].location;
-		a[j] = yJ[2];
+void CubicSpline::periodic(){
+	//find ai, and hi
+	std::vector<double> a;
+	std::vector<double> h;
+	for(int i =0 ; i < points.size(); i++){
+		//a[i] = the y value in our ith vector
+		a.push_back(points[i].location[2]);
+	}
+	for(int i =0 ; i < a.size(); i++){
+		std::cout << a[i] << " = our a of " << i << std::endl;
 	}
 
-	double h[k];
-
-
-	//compute h values.
-	for(int i = 0; i < k; i++){
-		Eigen::Vector3d next = points[i + 1].location;
-		Eigen::Vector3d current = points[i].location;
-		std::cout << next[1] << std::endl;
-		std::cout << current[1] << std::endl;
-		//x here is y
-		double hValue = next[1] - current[1];
-
-		std::cout << hValue;
-		h[i] = hValue;
-		std::cout << h[i] << "Our h of " << i << std::endl;
+	for(int i =0 ; i < points.size() -1; i++){
+		//h[i] = the difference between xi+1 and xi
+		double xDifference = points[i+1].location[1] - points[i].location[1];
+		h.push_back(xDifference);
 	}
 
-	double beta[k];
 
-	for(int i = 1; i < k; i++){
-		double aNeighbourHigh = a[i + 1] - a[i];
-		double aNeighbourLow = a[i] - a[i -1];
+	//need to fill matrix
 
-		beta[i] = (3/h[i])*aNeighbourHigh- (3/h[i - 1])*aNeighbourLow;
-	}
+	Eigen::MatrixXf H(points.size() -2, points.size() -2);
+	int n = 1;
+	//fill matrix, tridiagonal.
 
-	double c[n+1], l[n+1], z[n + 1];
+	/**for(int i = 0; i < points.size() -2; i++){
 
-	l[0] = 1;
-	z[0] = 0;
-	u[0] = 0;
+		for(int k = 0; k < points.size() -2; k++){
+			if(i == k){
+				H(i, k) = 2*(h[n] + h[n + 1]);
+			}
+			if(k == (i + 1)){
+				H(i, k) = h[n];
+			}
+			if(k == (i - 1)){
+				H(i, k) = h[n+ 1];
+			}
+		}
+		n++;
+	}*/
+	Eigen::VectorXf solutionH(points.size() - 2);
 
-	for(int i = 1; i < k ; i++){
-		Eigen::Vector3d next = points[i+1].location;
-		Eigen::Vector3d previous = points[i - 1].location;
-		double yDifference = next[1] - previous[1];
+	for(int i =0 ; i < points.size() - 2; i++){
+		if(i == 0){
+			H(i, 0) = 2*(h[0] + h[1]);
 
-		l[i] = 2*(yDifference) - (h[i -1]*u[i - 1]);
-		u[i] = h[i]/l[i];
-
-		z[i] = (beta[i] -(h[i - 1]*z[i-1]))/l[i];
-	}
-	for(int i = 0; i < n; i++){
+		}else{
+			H(i, i -1) = h[i];
+			H(i, i) = 2*(h[i] + h[i + 1]);
+			if(i < points.size() - 3){
+				H(i, i+1) = h[i + 1];
+			}
+		}
+		solutionH(i) = ((a[i + 2] - a[i + 1])/h[i+1] - (a[i+1] - a[i]/h[i]))*3.0f;
 
 	}
 
-	l[n] = 1;
-	z[n] = 0;
-	c[n] = 0;
 
+/**	for(int i = 0; i < points.size() -2; i++){
+		double solutionI = 3*(a[n + 1] -a[n])/(h[n -1]) - 3*(a[n-1] -a[n-2])/(h[n-2]);
+		solutionH[i] = solutionI;
+		n++;
 
-	for(int i = n - 1; i >= 0; i--){
-		c[i] = z[i] -( u[i]*c[i+1]);
-		b[i] = (a[i + 1] - a[i])/h[i] - h[i]*(c[i + 1] + 2*c[i])/3;
-		d[i] = (c[i + 1] - c[i])/(3*h[i]);
+	}*/
+
+	std::cout << "\n\n\n\nOur solution to H: " << std::endl;
+	std::cout << solutionH << std::endl;
+	std::cout << "Our H : \n" << H << "\n\n\n\n" <<  std::endl;
+
+	for(int i =0 ; i < h.size(); i++){
+		std::cout << "H of " << i << " = " << h[i] << " ";
+
 	}
 
-	std::vector<Eigen::Vector4d> outputSpline;
-	for(int i = 0; i < k - 1; i++){
-		Eigen::Vector4d Pi;
-		Pi[0] = a[i];
-		Pi[1] = b[i];
-		Pi[2] = c[i];
-		Pi[3] = d[i];
-		outputSpline.push_back(Pi);
-		std::cout << "Polynomial at interval i : " << i << " = " << Pi[0] << "*x^3 + " << Pi[1] << "*x^2 + " << Pi[2] << "*x + " << Pi[3] << std::endl;
-		/*
-		std::cout << a[i] << std::endl;
-		std::cout << b[i] << std::endl;
-		std::cout << c[i] << std::endl;
-		std::cout << d[i] << std::endl;
-		*
+
+	Eigen::VectorXf x = H.colPivHouseholderQr().solve(solutionH);
+	std::cout << "Our  x = \n" << x << std::endl;
+	std::vector<double> b;
+	std::vector<double> c;
+	std::vector<double> d;
+	c.push_back(0);
+	for(int i =0 ; i < x.size(); i++){
+		//put our X vectors values into c, with c[0] = 0, and c[n] = 0;
+		c.push_back(x[i]);
+
 	}
-	drawSplinesYZ(outputSpline, t);
+	c.push_back(0);
+	for(int i =0 ; i < c.size(); i++) {
+		std::cout << c[i] << " our c" << std::endl;
+	}
 
-	return outputSpline;
+	for(int i =0 ; i < points.size() - 1 ; i++){
+		//solve d and b in terms of c.
+		double bCoefficient = ((a[i + 1] - a[i])*(1.f/h[i]) - (h[i]/3.f)*(c[i+1] + 2.0f*c[i]));
+		double dCoefficient = (c[i+1] - c[i])/(3.f*h[i]);
+		d.push_back(dCoefficient);
+		b.push_back(bCoefficient);
 
+	}
+	for(int i =0 ; i < b.size(); i++){
+	std::cout << "Our b coefficient: " << b[i] << std::endl;
+	std::cout << "Our d coefficient: " << d[i] << std::endl;
+	//std::cout << d[i] << std::endl;
+	}
+	std::vector<Eigen::Vector4d> coefficients;
 
+	for(int i =0 ; i < points.size(); i++){
+				Eigen::Vector4d coeffs;
+				coeffs[0] = a[i];
+				coeffs[1] = b[i];
+				coeffs[2] = c[i];
+				coeffs[3] = d[i];
+
+				coefficients.push_back(coeffs);
+			}
+	this->splines = coefficients;
+	Interpolate("Interpolate.ply", 200, h);
+	drawSplines(coefficients, 1, "ISplines.ply");
 }
 
 
-std::vector<Eigen::Vector4d> CubicSpline::computeSpline(){
-		//create a new array of size n + 1
-	int n = points.size();
-	std::cout << "This is n: " <<  n << std::endl;
-	int k = n;
+void CubicSpline::Interpolate( std::string t, int resolution, std::vector<double> h){
 
-	double a[n + 1];
-	double b [n];
-	double d [n];
-	double u[n];
+	double timestamp;
+	std::vector<Vertex> vertices;
+	for(int i =0 ; i < points.size() -1; i++){
+		Eigen::Vector4d spline = this->splines[i];
+		double measure  = points[i+1].location[0] - points[i].location[0];
+		for(double x = 0.0; x < measure; x+= 0.001){
+			Vertex v;
+			double xPrime = x + points[i].location[1];
+			double yPrime = spline[0] + spline[1]*(x) + spline[2]*pow(x, 2) + spline[3]*pow(x,3);
+			v.location = Eigen::Vector3d(xPrime, yPrime, 0);
+			vertices.push_back(v);
 
-	//compute a values
-	for(int j = 0; j < points.size(); j++){
-		Eigen::Vector3d yJ = points[j].location;
-		a[j] = yJ[1];
+		}
 	}
-
-	double h[k];
-
-
-	//compute h values.
-	for(int i = 0; i < k; i++){
-		Eigen::Vector3d next = points[i + 1].location;
-		Eigen::Vector3d current = points[i].location;
-		std::cout << next[1] << std::endl;
-		std::cout << current[1] << std::endl;
-		//x here is y
-		double hValue = next[0] - current[0];
-
-		std::cout << hValue;
-		h[i] = hValue;
-		std::cout << h[i] << "Our h of " << i << std::endl;
-	}
-
-	double beta[k];
-
-	for(int i = 1; i < k; i++){
-		double aNeighbourHigh = a[i + 1] - a[i];
-		double aNeighbourLow = a[i] - a[i -1];
-
-		beta[i] = (3/h[i])*aNeighbourHigh- (3/h[i - 1])*aNeighbourLow;
-	}
-
-	double c[n+1], l[n+1], z[n + 1];
-
-	l[0] = 1;
-	z[0] = 0;
-	u[0] = 0;
-
-	for(int i = 1; i < k ; i++){
-		Eigen::Vector3d next = points[i+1].location;
-		Eigen::Vector3d previous = points[i - 1].location;
-		double xDifference = next[0] - previous[0];
-
-		l[i] = 2*(xDifference) - (h[i -1]*u[i - 1]);
-		u[i] = h[i]/l[i];
-
-		z[i] = (beta[i] -(h[i - 1]*z[i-1]))/l[i];
-	}
-	for(int i = 0; i < n; i++){
-
-	}
-
-	l[n] = 1;
-	z[n] = 0;
-	c[n] = 0;
-
-
-	for(int i = n - 1; i >= 0; i--){
-		c[i] = z[i] -( u[i]*c[i+1]);
-		b[i] = (a[i + 1] - a[i])/h[i] - h[i]*(c[i + 1] + 2*c[i])/3;
-		d[i] = (c[i + 1] - c[i])/(3*h[i]);
-	}
-
-	std::vector<Eigen::Vector4d> outputSpline;
-	for(int i = 0; i < k - 1; i++){
-		Eigen::Vector4d Pi;
-		Pi[0] = a[i];
-		Pi[1] = b[i];
-		Pi[2] = c[i];
-		Pi[3] = d[i];
-		outputSpline.push_back(Pi);
-		std::cout << "Polynomial at interval i : " << i << " = " << Pi[0] << "*x^3 + " << Pi[1] << "*x^2 + " << Pi[2] << "*x + " << Pi[3] << std::endl;
-		/*
-		std::cout << a[i] << std::endl;
-		std::cout << b[i] << std::endl;
-		std::cout << c[i] << std::endl;
-		std::cout << d[i] << std::endl;
-
-	}
-
-	drawSplines(outputSpline,  0, "Test.ply");
-
-	return outputSpline;
+	PlyFile p(vertices);
+	p.write("Interpolate.ply");
 
 
 }
-*/
-
-
-
 
 std::vector<Eigen::Vector4d> CubicSpline::computeSplines(int axis, std::string t){
 	int n = points.size();
@@ -266,6 +209,10 @@ std::vector<Eigen::Vector4d> CubicSpline::computeSplines(int axis, std::string t
 
 	}
 
+	for(int i = 0 ; i< n+1; i++){
+		std::cout << "These are our cs : " << c[i] << std::endl;
+	}
+
 	std::vector<Eigen::Vector4d> coefficients;
 	for(int i = 0; i < n  ; i++){
 		Eigen::Vector4d coeffs;
@@ -278,7 +225,7 @@ std::vector<Eigen::Vector4d> CubicSpline::computeSplines(int axis, std::string t
 	}
 
 	splines = coefficients;
-	drawSplines(coefficients, axis, t);
+	//drawSplines(coefficients, axis, t);
 	return coefficients;
 
 
@@ -293,22 +240,23 @@ void CubicSpline::drawSplines(std::vector<Eigen::Vector4d> splines, int axis, st
 	//draw points at x incremental intervals.
 	std::vector<Vertex>  splinePoints;
 	std::cout << "Size of the splines : " <<  splines.size()  << std::endl;
-	for(int i = 0; i <= points.size() ; i++){
-		std::cout << splines[i] << std::endl;
+	for(int i = 0; i < points.size() -1 ; i++){
+		//std::cout << splines[i] << std::endl;
 		//std::cout << "Our i : " << i << std::endl;
 
 		double measure  = points[i+1].location[axis] - points[i].location[axis];
 		//std::cout << measure << std::endl;
-		for(double x = 0.0; x <= measure; x+= 0.001){
+		for(double x = 0.0; x < measure; x+= 0.001){
 			Vertex v;
 			Eigen::Vector3d point;
 			Eigen::Vector4d polynomial = splines[i];
 		//	std::cout << "Our x : " << points[i].location[0] << std::endl;
 			double x1 = x + points[i].location[axis];
-			double evaluate =(x1 - points[i].location[axis]);
+			double evaluate (x1 - points[i].location[axis]);
+			std::cout << "X1 = !!!!! " << x1 << std::endl;
 			double y = pow(evaluate, 3)*polynomial[3] + pow(evaluate, 2)*polynomial[2] + evaluate*polynomial[1] + polynomial[0];
 		//std::cout <<  "This is f(x): " << y << std::endl;
-
+			std::cout << "Y == !!!!! " << y << std::endl;
 		//	std::cout << x1 << " our x " << std::endl;
 			point[(axis+2)%3] = 0;
 			point[axis] = x1;
@@ -334,55 +282,46 @@ void CubicSpline::runLib(std::string s){
 		int size = negatives.size();
 		negatives.sortAlongAxis(1, 0, size);
 		negatives.write("NegativesSortedY.ply");
-			std::vector<double> x;
-			std::vector<double> y;
+		std::vector<double> x;
+		std::vector<double> y;
 
-			std::vector<Vertex> pos = points.collectPositiveVertices(2);
-			PlyFile positives(pos);
-			positives.sortAlongAxis(1, 0, pos.size());
+		std::vector<Vertex> pos = points.collectPositiveVertices(2);
+		PlyFile positives(pos);
+		positives.sortAlongAxis(1, 0, pos.size());
 
-			//attempt to interpolate between the positive and negative interpolation
-			//negatives.push_back(positives[0]);
-			//negatives.push_back(positives[positives.size()]);
-			//negatives.sortAlongAxis(1,0, negatives.size());
+		//attempt to interpolate between the positive and negative interpolation
+		//negatives.push_back(positives[0]);
+		//negatives.push_back(positives[positives.size()]);
+		//negatives.sortAlongAxis(1,0, negatives.size());
 
-			std::vector<double> xPos;
-			std::vector<double> yPos;
+		std::vector<double> xPos;
+		std::vector<double> yPos;
 
-			for(int i =0 ; i < positives.size(); i++){
-				xPos.push_back(positives[i].location[1]);
-				yPos.push_back(positives[i].location[2]);
+		for(int i =0 ; i < positives.size(); i++){
+			xPos.push_back(positives[i].location[1]);
+			yPos.push_back(positives[i].location[2]);
+		}
 
+		for(int i = 0; i < negatives.size(); i++){
+		//std::cout << negatives[i].location(1) << std::endl;
+		//std::cout << negatives[i].location(2) << std::endl;
+		x.push_back(negatives[i].location[1]);
+		y.push_back(negatives[i].location[2]);
+		}
 
-			}
+		tk::spline sNeg;
+		sNeg.set_points(x, y);
+		std::vector<Vertex> vertices;
+		/**
+		for(int i =0 ;i < size-1; i++){
+			//std::cout <<  "In here" << std::endl;
+			//std::cout << negatives.size();
+			std::cout << "Next value in x vector : " << x[i+1] << std::endl;
+			std::cout << "Current value in x vector : " <<  x[i] << std::endl;
+			double difference = abs(x[i+1] - x[i]);
 
-
-
-			for(int i = 0; i < negatives.size(); i++){
-				//std::cout << negatives[i].location(1) << std::endl;
-			//std::cout << negatives[i].location(2) << std::endl;
-				x.push_back(negatives[i].location[1]);
-
-				y.push_back(negatives[i].location[2]);
-
-			}
-
-
-
-			tk::spline sNeg;
-
-			sNeg.set_points(x, y);
-			std::vector<Vertex> vertices;
-			/**
-			for(int i =0 ;i < size-1; i++){
-				//std::cout <<  "In here" << std::endl;
-				//std::cout << negatives.size();
-				std::cout << "Next value in x vector : " << x[i+1] << std::endl;
-				std::cout << "Current value in x vector : " <<  x[i] << std::endl;
-				double difference = abs(x[i+1] - x[i]);
-
-				for(double x1 = 0.0; x1 < difference; x1+= 0.001){
-					Vertex v;
+			for(double x1 = 0.0; x1 < difference; x1+= 0.001){
+				Vertex v;
 					Eigen::Vector3d point;
 					std::cout << "Our x increment : " << x1 << std::endl;
 					std::cout << "Our spline interpolation : " << s(x1) << std::endl;
@@ -400,9 +339,7 @@ void CubicSpline::runLib(std::string s){
 
 			}
 			*/
-
-
-				//first point
+		//first point
 				// draw a set number of points between
 				//next point.
 
@@ -411,7 +348,6 @@ void CubicSpline::runLib(std::string s){
 
 			for(double x1 = x[0]; x1 < abs(x[negatives.size()] - x[0]); x1 += 0.001){
 				std::cout << x1 << std::endl;
-
 
 				Vertex v;
 				Eigen::Vector3d point;
@@ -533,19 +469,21 @@ void CubicSpline::drawSplinesYZ(std::vector<Eigen::Vector4d> splines, std::strin
 		std::cout << "Our i : " << i << std::endl;
 		double measure  = points[i+1].location[1] - points[i].location[1];
 
-		for(double y = 0.0; y < measure; y+= 0.001){
+		for(double y = points[i].location[1]; y < points[i+1].location[1]; y+= 0.001){
 			Vertex v;
 			Eigen::Vector3d point;
 			Eigen::Vector4d polynomial = splines[i];
 		//	std::cout << "Our x : " << points[i].location[0] << std::endl;
-			double y1 = y + (points[i].location[1]);
-			double evaluate =(y1 - points[i].location[1]);
+			//double y1 = y + (points[i].location[1]);
+			//double evaluate =(y1 - points[i].location[1]);
+			double evaluate = y;
+
 			double z = pow(evaluate, 3)*polynomial[3] + pow(evaluate, 2)*polynomial[2] + evaluate*polynomial[1] + polynomial[0];
 		std::cout <<  "This is Y: " << y << std::endl;
 
-			std::cout << y1 << " our x1 " << std::endl;
+			std::cout << y << " our x1 " << std::endl;
 			point[0] = 0;
-			point[1] = y1;
+			point[1] = y;
 			point[2] = z;
 			v.location = point;
 			v.colour = Eigen::Vector3i(0, 255, 0);

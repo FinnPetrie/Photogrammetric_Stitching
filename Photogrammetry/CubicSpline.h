@@ -9,6 +9,7 @@ private:
 	PlyFile points;
 	double* fillA(int n, int axis);
 	std::vector<Eigen::Vector4d> splines;
+	std::vector<double> solutionVector;
 
 public:
 
@@ -26,6 +27,9 @@ public:
 	void runLib(std::string s);
 	void drawSplinesYZ(std::vector<Eigen::Vector4d> splines, std::string t);
 	void approximateHull();
+
+	void periodic();
+	void Interpolate( std::string t, int resolution, std::vector<double> h);
 
 };
 

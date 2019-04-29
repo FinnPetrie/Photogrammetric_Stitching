@@ -19,7 +19,8 @@ void CircularDemons::runSpline(){
 	//split into positive and negative surfaces.
 
 	//CubicSpline c;
-
+	fixedHull.orientateAroundYAxis();
+	fixedHull.sortAlongAxis(1, 0, fixedHull.size());
 	std::vector<Vertex> fixedPositive = fixedHull.collectPositiveVertices(2);
 	std::vector<Vertex> fixedNegative = fixedHull.collectNegativeVertices(2);
 
@@ -29,17 +30,29 @@ void CircularDemons::runSpline(){
 	fixedPos.write("FixedPos.ply");
 	fixedNeg.write("FixedNeg.ply");
 
-	CubicSpline fixedSpline(fixedHull);
-	fixedSpline.computeSplines(1, "FixedSplines.ply");
+	CubicSpline c(fixedHull);
+	c.runLib("FixedHull");
+	std::cout << "finshing  compute splines" << std::endl;
+
+	PlyFile positiveSplines("fixedSplinesPos.ply");
+	PlyFile fixedSplines("FixedHull");
+	PlyFile negativeSplines("fixedSplinesNeg.ply");
+
+
+
+	///to do: compute the splines for the divisions
+	///fuse the computed spline into one ply.
+	///project t
+
 
 
 	//project the spline to the circle, we want this to be bijective.
 	//for a set of samples along the arclength of the circle, project the spline curve to that point, and associate curvature
 
-	for(int i = 0; i < 180; i++){
+	/**for(int i = 0; i < 180; i++){
 		//take the ith value of the spline
 
-	}
+	}*/
 
 
 

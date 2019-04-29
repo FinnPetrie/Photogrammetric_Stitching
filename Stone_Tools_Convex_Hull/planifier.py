@@ -2,7 +2,9 @@ from plyfile import PlyData, PlyElement
 import os
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 from scipy.spatial import ConvexHull
+from scipy.interpolate import CubicSpline
 
 # Parameters
 distanceThreshold = 0.01
@@ -18,6 +20,8 @@ def checkInliers(points, plane):
 		if distance(points[i], plane) < distanceThreshold:
 			inliers.append(i)
 	return inliers
+
+
 
 def estimatePlane(p1, p2, p3):
 	#print("Our points: " + str(p1) + " " + str(p2) + " " + str(p3))
@@ -101,6 +105,33 @@ def write(vertices, colours, filename):
 	f.close()
 	print("Finished writing")
 
+def writeWithNormals(vertices, colours, normals, filename):
+	f = open(filename + ".ply", "w+")
+	f.write("ply\n" + "format ascii 1.0\n" + "element vertex " + str(vertices.size / 3) + "\n" + "property float x\n"
+			+ "property float y\n" + "property float z\n" + "property float nx\n" + "property float ny\n"
+	    + "property float nz\n" + "property uchar red\n" + "property uchar green\n" + "property uchar blue\n"
+			+ "end_header\n")
+
+	print("Size of our vertices: " + str(vertices.size / 3) + "\n")
+
+	division = vertices.size/3
+	for i in range(int(division)):
+		#  print(str(i) + "\n")
+
+		for j in range(0, 3):
+			#      print("Our j :" + str(j) + "\n")
+			f.write(str(vertices[i][j]) + " ")
+		for t in range(0, 3):
+			f.write(str(normals[i][j]) + " ")
+		for p in range(0, 3):
+			if (p < 2):
+				f.write(str(int(colours[i][p])) + " ")
+			else:
+				f.write(str(int(colours[i][p])))
+
+		f.write("\n")
+	f.close()
+	print("Finished writing")
 
 
 def writePlane(plane, filename):
@@ -138,6 +169,7 @@ def computeXZPlane():
 	normal =np.array([0, 1, 0])
 	point = np.array([1, 0, 1])
 	return (point, normal)
+
 def computeYZPlane():
 	normal =np.array([1, 0, 0])
 	point = np.array([0, 1, 1])
@@ -238,6 +270,142 @@ def translateToHull(point, transVec):
 
 #What do I want to do here?
 #Do the same computations, but remapping the object's plane.
+
+def convexHull(src, tgt):
+	ply = PlyData.read(src)
+	numVertices = ply['vertex'].count
+	srcPts = np.zeros((numVertices, 3))
+	srcColours = np.zeros((numVertices, 3))
+	srcNormals = np.zeros((numVertices, 3))
+
+	for i in range(numVertices):
+
+		srcPts[i][0] = ply['vertex']['x'][i]
+		srcPts[i][1] = ply['vertex']['y'][i]
+		srcPts[i][2] = ply['vertex']['z'][i]
+
+		srcColours[i][0] = ply['vertex']['red'][i]
+		srcColours[i][1] = ply['vertex']['green'][i]
+		srcColours[i][2] = ply['vertex']['blue'][i]
+
+		srcNormals[i][0] = ply['vertex']['nx'][i]
+		srcNormals[i][1] = ply['vertex']['ny'][i]
+		srcNormals[i][2] = ply['vertex']['nz'][i]
+
+
+	cov_Comp = np.transpose(srcPts)
+	#print(cov_Comp)
+	cov_mat = np.cov([cov_Comp[0,:],cov_Comp[1,:],cov_Comp[2,:]])
+
+	eigen_Values, eigen_Vectors = np.linalg.eig(cov_mat)
+
+	# print('Covariance Matrix:\n', cov_mat)
+	print('Eigen vectors:\n', eigen_Vectors)
+	print('\neigen values: \n', eigen_Values)
+
+
+	changeBasis = cobMatrix(eigen_Vectors, standardBasis())
+
+	print("Our change of basis: " + str(changeBasis))
+
+
+	twoDPoints = np.zeros((numVertices, 2))
+	zElement = np.zeros((numVertices, 1))
+	twoDNormals = np.zeros((numVertices, 2))
+
+	for i in range(numVertices):
+		srcPts[i] = np.matmul(changeBasis, srcPts[i])
+		srcNormals[i] = np.matmul(changeBasis, srcNormals[i])
+
+		##for dorsal
+		# twoDPoints[i][0] = srcPts[i][1]
+		# twoDPoints[i][1] = srcPts[i][2]
+		twoDPoints[i][0] = srcPts[i][0]
+		twoDPoints[i][1] = srcPts[i][1]
+
+		twoDNormals[i][0] = srcNormals[i][0]
+		twoDNormals[i][1] = srcNormals[i][1]
+
+		zElement[i] = srcPts[i][2]
+
+
+	hull = ConvexHull(twoDPoints)
+	cent = centroid(srcPts, numVertices)
+
+	tgtPts = np.zeros((hull.vertices.size, 3))
+	tgtColours = np.zeros((hull.vertices.size, 3))
+	tgtNormals = np.zeros((hull.vertices.size, 3))
+
+	x = np.zeros(hull.vertices.size)
+	y = np.zeros(hull.vertices.size)
+	for i in range(hull.vertices.size):
+		##for dorsal##
+		# tgtPts[i][0] = 0
+		# tgtPts[i][2] = twoDPoints[hull.vertices[i]][1]
+		# tgtPts[i][1] = twoDPoints[hull.vertices[i]][0]
+
+		tgtPts[i][0] = twoDPoints[hull.vertices[i]][0]
+		tgtPts[i][1] = twoDPoints[hull.vertices[i]][1]
+		tgtPts[i][2] = 0
+
+		x[i] = tgtPts[i][0]
+		y[i] = tgtPts[i][1]
+		tgtNormals[i][0] = twoDNormals[hull.vertices[i]][0]
+		tgtNormals[i][1] = twoDNormals[hull.vertices[i]][1]
+		tgtNormals[i][2] = 0
+
+
+		# recolour data
+		tgtColours[i][0] = 255
+		tgtColours[i][1] = 0
+		tgtColours[i][2] = 0
+
+	print(x)
+
+	##divide the hull in two, then sort
+	x.sort()
+	y.sort()
+	print(y.size)
+	print(y[23])
+	y[0] = y[23]
+	cs = CubicSpline(x, y, bc_type = 'periodic')
+	##plt.figure(figsize=(6.5, 4))
+	# map to plane:
+
+
+
+	hullCentroid = centroid(tgtPts, hull.vertices.size)
+	print(cent)
+	cent.reshape(3, 1)
+
+	##dorsal centroid target = computeYZPlane()
+	centroidTarget = secondProject(cent, computeXYPlane())
+	translateVector = centroidTarget - cent
+	for i in range(numVertices):
+		srcPts[i] = translateToHull(srcPts[i], translateVector)
+		#srcNormals[i] = translateToHull(srcNormals[i], translateVector)
+
+	writeWithNormals(srcPts, srcColours, srcNormals, "Reorientated_Surface")
+	writeWithNormals(tgtPts, tgtColours, tgtNormals, "ConvexHull")
+
+
+	print(' - Writing data')
+	for i in range(numVertices):
+
+		#hullPly = PlyElement.describe(srcPts[hull.vertices[i]], 'vertex')
+		ply['vertex']['x'][i] = srcPts[i][0]
+		ply['vertex']['y'][i] = srcPts[i][1]
+		ply['vertex']['z'][i] = srcPts[i][2]
+		ply['vertex']['nx'][i] = srcNormals[i][0]
+		ply['vertex']['ny'][i] = srcNormals[i][1]
+		ply['vertex']['nz'][i] = srcNormals[i][2]
+		ply['vertex']['red'][i] = srcColours[i][0]
+		ply['vertex']['green'][i] = srcColours[i][1]
+		ply['vertex']['blue'][i] = srcColours [i][2]
+	# Write the result
+	ply.write(tgt)
+
+
 def planify(src, plane, tgt):
 	# Read in source ply data
 	print(' - Reading data')
@@ -245,12 +413,14 @@ def planify(src, plane, tgt):
 	plane = PlyData.read(plane)
 	#denseCloud = PlyData.read('VentralToPlane.ply')
 	numVertices = ply['vertex'].count
+
 	numPlaneVertices = plane['vertex'].count
 	planePts = np.zeros((numPlaneVertices, 3))
 	planeColours = np.zeros((numPlaneVertices, 3))
 	srcPts = np.zeros((numVertices, 3))
 	srcColours = np.zeros((numVertices, 3))
 
+	srcNormals = np.zeros((numNormals, 3))
 	#denseNumber = denseCloud['vertex'].count
 	#densePoints = np.zeros((denseNumber, 3))
 
@@ -462,4 +632,4 @@ for f in os.listdir('output'):
 		src = 'output/' + f + '/' + f + '_point_cloud.ply'
 		plane = 'output/' + f + '/' + f + '_plane.ply'
 		tgt = 'output/' + f + '/' + f + '_point_cloud_planified.ply'
-		planify(src, plane, tgt)
+		convexHull(src, tgt)
