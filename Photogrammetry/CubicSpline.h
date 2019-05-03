@@ -10,10 +10,13 @@ private:
 	double* fillA(int n, int axis);
 	std::vector<Eigen::Vector4d> splines;
 	std::vector<double> solutionVector;
+	bool periodic = false;
 
 public:
 
 	CubicSpline(PlyFile points);
+	CubicSpline(PlyFile points, bool period);
+
 	std::vector<Eigen::Vector4d> computeSpline();
 
 	std::vector<Eigen::Vector4d> computeSplines(int axis, std::string t);
@@ -28,7 +31,7 @@ public:
 	void drawSplinesYZ(std::vector<Eigen::Vector4d> splines, std::string t);
 	void approximateHull();
 
-	void periodic();
+	void spline(int xAxis, std::string t);
 	void Interpolate( std::string t, int resolution, std::vector<double> h);
 
 };

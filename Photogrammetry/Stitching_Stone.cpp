@@ -154,14 +154,21 @@ void filter(std::string Ventral, std::string Dorsal){
 
 void splineTestTwo(){
 	PlyFile staticHull("StaticHull.ply");
+	staticHull.print();
 	staticHull.orientateAroundYAxis();
-//	staticHull.sortAlongAxis(1, 0, staticHull.size());
-	CubicSpline c(staticHull);
-	c.periodic();
+	//staticHull.sortAlongAxis(1, 0, staticHull.size());
+	staticHull.write("ConvexHull_Interpolate.ply");
+	CubicSpline c(staticHull, true);
+	c.approximateHull();
 	//c.computeSplines(1, "hello");
 }
 
+void splineTestThree(){
+	PlyFile dynamicHull("DynamicHull.ply");
+	dynamicHull.orientateAroundYAxis();
+	dynamicHull.write("DynamicHull_Interpolate.ply");
 
+}
 
 
 int tinySplineTest()
@@ -213,6 +220,7 @@ int tinySplineTest()
 int main(void) {
 
 	splineTestTwo();
+	splineTestThree();
 	//computeDemons2nd();
 //	tinySplineTest();
 	return 0;

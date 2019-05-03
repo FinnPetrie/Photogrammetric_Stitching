@@ -5,30 +5,47 @@ CubicSpline::CubicSpline(PlyFile p) : points(p){
 
 }
 
+CubicSpline::CubicSpline(PlyFile p, bool period) : points(p), periodic(period){
 
-void CubicSpline::periodic(){
+}
+
+
+void CubicSpline::spline(int xAxis, std::string t){
 	//find ai, and hi
 	std::vector<double> a;
 	std::vector<double> h;
 	for(int i =0 ; i < points.size(); i++){
 		//a[i] = the y value in our ith vector
-		a.push_back(points[i].location[2]);
-	}
-	for(int i =0 ; i < a.size(); i++){
-		std::cout << a[i] << " = our a of " << i << std::endl;
+		a.push_back(points[i].location[(xAxis+1)%3]);
 	}
 
+	points.print();
 	for(int i =0 ; i < points.size() -1; i++){
 		//h[i] = the difference between xi+1 and xi
-		double xDifference = points[i+1].location[1] - points[i].location[1];
+	//	std::cout << points[i+1].location[xAxis] << std::endl;
+		std::cout << " points[i].x = " << points[i].location[0];
+		double xDifference = points[i+1].location[xAxis] - points[i].location[xAxis];
 		h.push_back(xDifference);
+		std::cout << "our h_i = " << std::endl;
+		std::cout << h[i] << std::endl;
+	}
+
+	for(int i =0 ; i < points.size(); i++){
+		std::cout << "x = " << points[i].location[0] << " y = " << points[i].location[1] << " z = " << points[i].location[2] << std::endl;
 	}
 
 
 	//need to fill matrix
+	int order;
+	if(periodic){
+		order = points.size() - 1;
+	}else{
+		order = points.size() - 2;
+	}
+	Eigen::MatrixXf H(order, order);
+	Eigen::VectorXf solutionH(order);
 
-	Eigen::MatrixXf H(points.size() -2, points.size() -2);
-	int n = 1;
+
 	//fill matrix, tridiagonal.
 
 	/**for(int i = 0; i < points.size() -2; i++){
@@ -46,12 +63,20 @@ void CubicSpline::periodic(){
 		}
 		n++;
 	}*/
-	Eigen::VectorXf solutionH(points.size() - 2);
 
-	for(int i =0 ; i < points.size() - 2; i++){
+	for(int i =0 ; i < order; i++){
+		std::cout << "It okay" << std::endl;
 		if(i == 0){
+			std::cout << "Instantiating the first H([i,0])" << std::endl;
 			H(i, 0) = 2*(h[0] + h[1]);
-
+			std::cout << "Instantiated" << std::endl;
+		if(periodic){
+			std::cout << "Yes periodic" << std::endl;
+			//by the required matrix
+			H(0, order -1) = h[0];
+			H(order- 1, 0) = h[0];
+			std::cout << "Got passed order assignment" << std::endl;
+			}
 		}else{
 			H(i, i -1) = h[i];
 			H(i, i) = 2*(h[i] + h[i + 1]);
@@ -59,9 +84,20 @@ void CubicSpline::periodic(){
 				H(i, i+1) = h[i + 1];
 			}
 		}
-		solutionH(i) = ((a[i + 2] - a[i + 1])/h[i+1] - (a[i+1] - a[i]/h[i]))*3.0f;
-
+		//still need to modify our solution vector to work with periodic functions.
+		if(periodic){
+			if(i != (order -1)){
+				solutionH(i) = ((a[i + 2] - a[i + 1])/h[i+1] - (a[i+1] - a[i])/h[i])*3.0f;
+			}else{
+				solutionH(i) =((a[1] - a[0])/h[0] - (a[0] - a[i])/h[i])*3.0f;
+				}
+			}else{
+				if((h[i] != 0.0f) && (h[i+1] != 0.0f)){
+				solutionH(i) = ((a[i + 2] - a[i + 1])/h[i+1] - (a[i+1] - a[i])/h[i])*3.0f;
+				}
+			}
 	}
+	std::cout << H << std::endl;
 
 
 /**	for(int i = 0; i < points.size() -2; i++){
@@ -122,8 +158,8 @@ void CubicSpline::periodic(){
 				coefficients.push_back(coeffs);
 			}
 	this->splines = coefficients;
-	Interpolate("Interpolate.ply", 200, h);
-	drawSplines(coefficients, 1, "ISplines.ply");
+	//Interpolate("Interpolate.ply", 200, h);
+	drawSplines(coefficients, xAxis, t);
 }
 
 
@@ -444,12 +480,12 @@ void CubicSpline::approximateHull(){
 	neg.write("Negative.ply");
 	points = pos;
 	//move negative components to the top, i.e., rotation by 180,
-	computeSplines(1, "PositiveSpline.ply");
+	spline(1, "PositiveSpline.ply");
 	Eigen::Vector3d cent = pos.centroid();
 	pos.rotateAxisAboutPoint(0, 1, cent);
-	pos.write("Positive.ply");
+	pos.write("Positive.pmly");
 	points = neg;
-	computeSplines(1, "NegativeSpline.ply");
+	spline(1, "NegativeSpline.ply");
 
 	PlyFile posSpline("PositiveSpline.ply");
 	posSpline.rotateAxisAboutPoint(0,1, cent);
