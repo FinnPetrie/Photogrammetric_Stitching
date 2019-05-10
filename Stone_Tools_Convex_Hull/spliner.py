@@ -90,15 +90,24 @@ def polar_coordinates(values):
         polar[i][1] = theta
     return polar
 
-def spline(src, tgt):
+
+
+
+
+
+def match(src, tgt):
     # Read in source ply data
     print(' - Reading data')
     ply = PlyData.read(src)
+    plyTgt = PlyData.read(tgt)
+
     numVertices = ply['vertex'].count
     srcPts = np.zeros((numVertices, 3))
+    dynamicSize = plyTgt['vertex'].count
+
     #get the convex hull
     srcColours = np.zeros((numVertices, 3))
-
+    dynamic_colours = np.zeros((dynamicSize, 3))
     x = []
     y = []
     for i in range(numVertices):
@@ -114,53 +123,100 @@ def spline(src, tgt):
     ##compute the spline.
    # tck, u = interpolate.splprep([x, y], s = 0, per=true)
     ##get xi, yi
-  #  print(x)
+
+
+    # print(x)
+
+    dynamicPoints = np.zeros((dynamicSize, 3))
+    dynamic_x = []
+    dynamic_y = []
+    for i in range(dynamicSize):
+        dynamicPoints[i][0] = plyTgt['vertex'][i][0]
+        dynamicPoints[i][1] = plyTgt['vertex'][i][1]
+        dynamicPoints[i][2] = plyTgt['vertex'][i][2]
+        dynamic_x.append(dynamicPoints[i][1])
+        dynamic_y.append(dynamicPoints[i][2])
+        dynamic_colours[i][0] = plyTgt['vertex']['red'][i]
+        dynamic_colours[i][1] = plyTgt['vertex']['green'][i]
+        dynamic_colours[i][2] = plyTgt['vertex']['blue'][i]
 
     x1 = np.array(x)
     x2 = np.array(y)
+    dynamic_x = np.array(dynamic_x)
+    dynamic_y = np.array(dynamic_y)
+    dynamic_x = np.r_[dynamic_x, dynamic_x[0]]
+    dynamic_y = np.r_[dynamic_y, dynamic_y[0]]
     x1 = np.r_[x1, x1[0]]
     x2 = np.r_[x2, x2[0]]
+    #
+    # print("This is x1 = ")
+    # print(x1)
+    # print("this is x2 = ")
+    # print(x2)
+    # print("This is dynamic_x = ")
+    # print(dynamic_x)
+    # print("This is dynamic_y = ")
+    # print(dynamic_y)
 
-    print(x1)
-    print(x2)
 
     # fit splines to x=f(u) and y=g(u), treating both as periodic. also note that s=0
     # is needed in order to force the spline fit to pass through all the input points.
-    tck, u = interpolate.splprep([x1, x2], s=0, per=True)
+    tck_static, u_static = interpolate.splprep([x1, x2], s=0, per=True)
+   # tck = interpolate.splrep(x1, x2)
+
 
 
     # evaluate the spline fits for 1000 evenly spaced distance values
-    xi, yi = interpolate.splev(np.linspace(0, 1, 1000), tck)
-
-    print(xi.size)
-
+    xi, yi = interpolate.splev(np.linspace(0, 1, 1000), tck_static)
+    tck_dynamic, u_dynamic = interpolate.splprep([dynamic_x, dynamic_y], s=0, per=True)
+    dynamic_xi, dynamic_yi =  interpolate.splev(np.linspace(0, 1, 1000), tck_dynamic)
     # plot the result
+    i = 0
+    t = []
+    while(i <= 1):
+        t.append(interpolate.splev(i, tck_dynamic))
+        i += 0.01
 
 
+    print(t)
+   # t = interpolate.splev(2, tck_dynamic)
+    #print("this is our t : " + str(t))
     vertices = np.zeros((1000, 3))
-    tgtPts = np.zeros((1000, 3))
+    m = Matching(tck_static, tck_dynamic)
+     # m.print()
+    print("this is our t: " + str(t))
+    dynamic_vertices = np.zeros((1000, 3))
+    save = np.zeros((100, 3))
+    saveColours = np.zeros((100, 3))
+    for i in range(100):
+        save[i][0] = t[i][0]
+        save[i][1] = t[i][1]
+        save[i][2] = 0
+        saveColours[i][0] = 255
+
+
     for i in range(1000):
         vertices[i][1] = xi[i]
         vertices[i][2] = yi[i]
         vertices[i][0] = 0
+        dynamic_vertices[i][1] = dynamic_xi[i]
+        dynamic_vertices[i][2] = dynamic_yi[i]
+        dynamic_vertices[i][0] = 0
+
    # for i in range(numVertices):
        # tgtPts[i] = srcPts[i]
        # print(srcPts[i])
     # Update the Ply file data
     p = polar_coordinates(vertices)
+    print("This is our p: ")
     print(p)
     print(' - Writing data')
-    for i in range(numVertices):
-        ply['vertex']['x'][i] = tgtPts[i][0]
-        ply['vertex']['y'][i] = tgtPts[i][1]
-        ply['vertex']['z'][i] = tgtPts[i][2]
+
     # Write the result
-    write(vertices, srcColours, "spline" + str(numRuns))
-
+    write(save, saveColours, "Polar")
+    #write(vertices, srcColours, "spline" + str(numRuns))
+   # write(dynamic_vertices, dynamic_colours, "dynamic_spline" + str(numRuns))
    # ply.write(vertices)
-
-
-
 def matching(dynamic, static):
     # Read in source ply data
     print(' - Reading data')
@@ -181,13 +237,13 @@ def matching(dynamic, static):
 
     polarStatic = polar_coordinates(staticSpline)
     polarDynamic = polar_coordinates(dynamicSpline)
+    print(polarStatic)
+    print(polarDynamic)
+    #match = Matching(polarStatic, polarDynamic)
+    #match.match()
 
-    match = Matching(polarStatic, polarDynamic )
 
 
-
-
-# ply.write(vertices)
 
 def approximate_spline():
     for f in os.listdir('output'):
@@ -202,8 +258,16 @@ def approximate_spline():
 def match_hulls():
     for f in os.listdir('output'):
         if os.path.isdir('output/' + f):
-            srcOne = 'output/' + f + '/' + f + '_static_point_cloud.ply'
-            srcTwo = 'output/' + f + '/' + f + '_dynamic_point_cloud.ply'
-            matching(srcOne, srcTwo)
 
+
+            print(f)
+            static =  'output/' + f + '/' + f + '_static_point_cloud.ply'
+
+            dynamic = 'output/' + f + '/' + f + '_dynamic_point_cloud.ply'
+            tgt = 'output/' + f + '/' + f + '_point_cloud_planified.ply'
+
+            print(static)
+            print(dynamic)
+            match(static, dynamic)
+             #atch(static, tgt)
 match_hulls()
