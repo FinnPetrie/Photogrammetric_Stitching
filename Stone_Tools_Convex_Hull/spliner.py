@@ -94,6 +94,25 @@ def polar_coordinates(values):
 
 
 
+def error():
+    i = 0
+
+    errorDistance = 0
+    while(i <= 1):
+
+        dynamicI = (interpolate.splev(i, tck_dynamic))
+        staticI = (interpolate.splev(i, tck_static))
+       # print("Our dynamic value: " + str(dynamicI) + " our static value : " + str(staticI))
+       # distanceX = dynamicI[0] - staticI[0]
+        #distanceY = dynamicI[1] - staticI[1]
+     #   d = np.(distanceX, distanceY)
+        dynamicNP = np.array(dynamicI)
+        staticNP = np.array(staticI)
+        print("Our dynamic: " + str(dynamicNP))
+        print("Our static: " + str(staticNP))
+        d = dynamicNP - staticNP
+        errorDistance += np.linalg.norm(d)
+        i += 0.01
 
 def match(src, tgt):
     # Read in source ply data
@@ -148,51 +167,40 @@ def match(src, tgt):
     dynamic_y = np.r_[dynamic_y, dynamic_y[0]]
     x1 = np.r_[x1, x1[0]]
     x2 = np.r_[x2, x2[0]]
-    #
-    # print("This is x1 = ")
-    # print(x1)
-    # print("this is x2 = ")
-    # print(x2)
-    # print("This is dynamic_x = ")
-    # print(dynamic_x)
-    # print("This is dynamic_y = ")
-    # print(dynamic_y)
 
-
+    print(x1.size)
     # fit splines to x=f(u) and y=g(u), treating both as periodic. also note that s=0
     # is needed in order to force the spline fit to pass through all the input points.
     tck_static, u_static = interpolate.splprep([x1, x2], s=0, per=True)
-   # tck = interpolate.splrep(x1, x2)
-
-
 
     # evaluate the spline fits for 1000 evenly spaced distance values
     xi, yi = interpolate.splev(np.linspace(0, 1, 1000), tck_static)
     tck_dynamic, u_dynamic = interpolate.splprep([dynamic_x, dynamic_y], s=0, per=True)
-    dynamic_xi, dynamic_yi =  interpolate.splev(np.linspace(0, 1, 1000), tck_dynamic)
+    dynamic_xi, dynamic_yi = interpolate.splev(np.linspace(0, 1, 1000), tck_dynamic)
     # plot the result
-    i = 0
-    t = []
-    while(i <= 1):
-        t.append(interpolate.splev(i, tck_dynamic))
-        i += 0.01
 
-
-    print(t)
+    # print(errorDistance)
+    # print(t)
    # t = interpolate.splev(2, tck_dynamic)
     #print("this is our t : " + str(t))
     vertices = np.zeros((1000, 3))
-    m = Matching(tck_static, tck_dynamic)
+  #  m = Matching(tck_static, tck_dynamic, dynamic_x, dynamic_y, x1, x2)
+    m = Matching(srcPts, dynamicPoints, dynamic_colours)
+    m.run()
+
+
+#    m.run()
      # m.print()
-    print("this is our t: " + str(t))
+    #print("this is our t: " + str(t))
     dynamic_vertices = np.zeros((1000, 3))
     save = np.zeros((100, 3))
     saveColours = np.zeros((100, 3))
-    for i in range(100):
-        save[i][0] = t[i][0]
-        save[i][1] = t[i][1]
-        save[i][2] = 0
-        saveColours[i][0] = 255
+    #
+    #for i in range(100):
+    #    save[i][0] = t[i][0]
+     #   save[i][1] = t[i][1]
+      #  save[i][2] = 0
+      #  saveColours[i][0] = 255
 
 
     for i in range(1000):
@@ -213,7 +221,7 @@ def match(src, tgt):
     print(' - Writing data')
 
     # Write the result
-    write(save, saveColours, "Polar")
+    #write(save, saveColours, "Polar")
     #write(vertices, srcColours, "spline" + str(numRuns))
    # write(dynamic_vertices, dynamic_colours, "dynamic_spline" + str(numRuns))
    # ply.write(vertices)
