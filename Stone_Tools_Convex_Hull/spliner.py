@@ -199,7 +199,7 @@ def match(src, tgt):
     #for i in range(100):
     #    save[i][0] = t[i][0]
      #   save[i][1] = t[i][1]
-      #  save[i][2] = 0
+      #  save[i][2] = 03
       #  saveColours[i][0] = 255
 
 

@@ -77,14 +77,29 @@ class Matching:
     def rotate(self, angle):
         theta = np.radians(angle)
         c, s = np.cos(theta), np.sin(theta)
-        R = np.array((c, -s), (s, c))
+      # print("Our sin: " + str(s))
+       #print("Our cosine: " + str(c))
+        R = np.zeros((2, 2))
+        R[0][0] = c
+        R[0][1] = -s
+        R[1][0] = s
+        R[1][1] = c
+#       R = np.array((c, -s), (s, c))
+        #rint(R)
         for i in range(0, len(self.dynamicPoints)):
-            newX = R*self.dynamicPoints[i][1]
-            newY = R*self.dynamicPoints[i][2]
-          # print(newX)
-            #rint(newY)
-            self.dynamicPoints[i][1] = newX[0]
-            self.dynamicPoints[i][2] = newY[0]
+           #newX = R*self.dynamicPoints[i][1]
+           #newY = R*self.dynamicPoints[i][2]
+
+            omitZ = np.zeros((2, 1))
+            omitZ[0] = self.dynamicPoints[i][1]
+            omitZ[1] = self.dynamicPoints[i][2]
+            rot_D = np.matmul(R, omitZ)
+          # print("This is R :"  + str(R[0]) + "\n" + str(R[1]))
+           #print(rot_D[0])         #rint(newX)
+          # print(rot_D[1])
+           #print(newY)
+            self.dynamicPoints[i][1] = rot_D[0]
+            self.dynamicPoints[i][2] = rot_D[1]
 
 
     def error(self):
@@ -107,6 +122,7 @@ class Matching:
         return errorDistance
 
     def run(self):
+        self.write("BeforeMatched")
         theta = 0
         minTheta = 0
         minError = math.inf
