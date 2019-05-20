@@ -181,46 +181,56 @@ def match(src, tgt):
 
     # print(errorDistance)
     # print(t)
-   # t = interpolate.splev(2, tck_dynamic)
+   # dynamic_x.sort()
+   # t = interpolate.CubicSpline(dynamic_x, dynamic_y, bc_type="periodic")
+    # t = interpolate.splev(2, tck_dynamic)
     #print("this is our t : " + str(t))
     vertices = np.zeros((1000, 3))
-  #  m = Matching(tck_static, tck_dynamic, dynamic_x, dynamic_y, x1, x2)
-    m = Matching(srcPts, dynamicPoints, dynamic_colours)
-    m.run()
+
+   # m = Matching(tck_static, tck_dynamic, dynamic_x, dynamic_y, x1, x2)
+    print("coefficients: " + str(tck_dynamic[1]))
+    print("degree: " + str(tck_dynamic[2]))
+    m = Matching(dynamicPoints, dynamicPoints, dynamic_colours)
+    m.setup_splines()
+    #m.evalSpline()
+    #m.run()
+   # m.setup_splines()
+   # m.rotate(90)
+    #m.write("Rotated360")
 
 
-#    m.run()
-     # m.print()
-    #print("this is our t: " + str(t))
-    dynamic_vertices = np.zeros((1000, 3))
-    save = np.zeros((100, 3))
-    saveColours = np.zeros((100, 3))
-    #
-    #for i in range(100):
-    #    save[i][0] = t[i][0]
-     #   save[i][1] = t[i][1]
-      #  save[i][2] = 03
-      #  saveColours[i][0] = 255
-
-
-    for i in range(1000):
-        vertices[i][1] = xi[i]
-        vertices[i][2] = yi[i]
-        vertices[i][0] = 0
-        dynamic_vertices[i][1] = dynamic_xi[i]
-        dynamic_vertices[i][2] = dynamic_yi[i]
-        dynamic_vertices[i][0] = 0
-
-   # for i in range(numVertices):
-       # tgtPts[i] = srcPts[i]
-       # print(srcPts[i])
-    # Update the Ply file data
-    p = polar_coordinates(vertices)
-    print("This is our p: ")
-    print(p)
-    print(' - Writing data')
-
-    # Write the result
+# #    m.run()
+#      # m.print()
+#     #print("this is our t: " + str(t))
+#     dynamic_vertices = np.zeros((1000, 3))
+#     save = np.zeros((100, 3))
+#     saveColours = np.zeros((100, 3))
+#     #
+#     #for i in range(100):
+#     #    save[i][0] = t[i][0]
+#      #   save[i][1] = t[i][1]
+#       #  save[i][2] = 03
+#       #  saveColours[i][0] = 255
+#
+#
+#     for i in range(1000):
+#         vertices[i][1] = xi[i]
+#         vertices[i][2] = yi[i]
+#         vertices[i][0] = 0
+#         dynamic_vertices[i][1] = dynamic_xi[i]
+#         dynamic_vertices[i][2] = dynamic_yi[i]
+#         dynamic_vertices[i][0] = 0
+#
+#    # for i in range(numVertices):
+#        # tgtPts[i] = srcPts[i]
+#        # print(srcPts[i])
+#     # Update the Ply file data
+#     p = polar_coordinates(vertices)
+#     print("This is our p: ")
+#     print(p)
+#     print(' - Writing data')
+#
+#     # Write the result
     #write(save, saveColours, "Polar")
     #write(vertices, srcColours, "spline" + str(numRuns))
    # write(dynamic_vertices, dynamic_colours, "dynamic_spline" + str(numRuns))
