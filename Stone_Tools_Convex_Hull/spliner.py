@@ -7,57 +7,6 @@ from Matching import Matching
 from scipy.spatial import ConvexHull
 from scipy import interpolate
 
-
-# Parameters
-distanceThreshold = 0.01
-numRansacTrials = 100
-numRuns = 0
-
-def distance(point, plane):
-    return abs(np.dot(plane[1], plane[0] - point))
-
-
-def checkInliers(points, plane):
-    nPnts = points.shape[0]
-    inliers = []
-    for i in range(nPnts):
-        if distance(points[i], plane) < distanceThreshold:
-            inliers.append(i)
-    return inliers
-
-
-def estimatePlane(p1, p2, p3):
-    n = np.cross(p3 - p1, p2 - p1)
-    n = n / np.linalg.norm(n)
-    return (p1, n)
-
-
-def estimatePlaneRansac(points):
-    # RANSAC trials
-    nPnts = points.shape[0]
-    bestInliers = []
-    bestPlane = (points[0], points[1])
-    for t in range(numRansacTrials):
-        ix = random.sample(range(nPnts), 3)
-        p1 = points[ix[0]]
-        p2 = points[ix[1]]
-        p3 = points[ix[2]]
-        plane = estimatePlane(p1, p2, p3)
-        inliers = checkInliers(points, plane)
-        if len(inliers) > len(bestInliers):
-            bestInliers = inliers
-            bestPlane = plane
-            print(len(bestInliers))
-    return bestPlane
-
-
-def project(point, plane):
-    norm = plane[1]
-    orig = plane[0]
-    scale = np.dot(orig, norm) / np.dot(point, norm)
-    return scale * point
-
-
 def write(vertices, colours, filename):
     f = open(filename + ".ply", "w+")
     f.write("ply\n" + "format ascii 1.0\n" + "element vertex " + str(vertices.size/3) + "\n" + "property float x\n" + "property float y\n" + "property float z\n" + "property uchar red\n" + "property uchar green\n" + "property uchar blue\n" + "end_header\n")
@@ -190,51 +139,18 @@ def match(src, tgt):
    # m = Matching(tck_static, tck_dynamic, dynamic_x, dynamic_y, x1, x2)
     print("coefficients: " + str(tck_dynamic[1]))
     print("degree: " + str(tck_dynamic[2]))
-    m = Matching(dynamicPoints, dynamicPoints, dynamic_colours)
-    m.setup_splines()
-    #m.evalSpline()
+    m = Matching(srcPts, dynamicPoints, dynamic_colours)
+    m.centreStatic()
+    m.centreDynamic()
+    m()
+            #m.evalSpline()
     #m.run()
    # m.setup_splines()
-   # m.rotate(90)
-    #m.write("Rotated360")
+   # m.rotate(360)
+   #  m.write("Rotated90")
 
 
-# #    m.run()
-#      # m.print()
-#     #print("this is our t: " + str(t))
-#     dynamic_vertices = np.zeros((1000, 3))
-#     save = np.zeros((100, 3))
-#     saveColours = np.zeros((100, 3))
-#     #
-#     #for i in range(100):
-#     #    save[i][0] = t[i][0]
-#      #   save[i][1] = t[i][1]
-#       #  save[i][2] = 03
-#       #  saveColours[i][0] = 255
 #
-#
-#     for i in range(1000):
-#         vertices[i][1] = xi[i]
-#         vertices[i][2] = yi[i]
-#         vertices[i][0] = 0
-#         dynamic_vertices[i][1] = dynamic_xi[i]
-#         dynamic_vertices[i][2] = dynamic_yi[i]
-#         dynamic_vertices[i][0] = 0
-#
-#    # for i in range(numVertices):
-#        # tgtPts[i] = srcPts[i]
-#        # print(srcPts[i])
-#     # Update the Ply file data
-#     p = polar_coordinates(vertices)
-#     print("This is our p: ")
-#     print(p)
-#     print(' - Writing data')
-#
-#     # Write the result
-    #write(save, saveColours, "Polar")
-    #write(vertices, srcColours, "spline" + str(numRuns))
-   # write(dynamic_vertices, dynamic_colours, "dynamic_spline" + str(numRuns))
-   # ply.write(vertices)
 def matching(dynamic, static):
     # Read in source ply data
     print(' - Reading data')
