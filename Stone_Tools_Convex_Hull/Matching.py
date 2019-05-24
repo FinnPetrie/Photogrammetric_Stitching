@@ -6,17 +6,23 @@ import numpy as np
 
 
 class Matching:
-    def __init__(self, staticPoints, dynamicPoints, dynColours):
-        self.staticPoints = staticPoints
-        self.dynColours = dynColours
-        self.dynamicPoints = dynamicPoints
-        c = np.delete(staticPoints, 0 , 1)
-        self.staticConvex = ConvexHull(c)
-        
+    # def __init__(self, staticPoints, dynamicPoints, dynColours):
+    #     self.staticPoints = staticPoints
+    #     self.dynColours = dynColours
+    #     self.dynamicPoints = dynamicPoints
+    #     c = np.delete(staticPoints, 0 , 1)
+    #     self.staticConvex = ConvexHull(c)
+    #     self.stitching = False
 
     
     
-        
+    def __init__(self, staticHull, dynamicHull, dynColours, staticSurface =None, dynamicSurface = None, stitching = False):
+        self.staticPoints = staticHull
+        self.dynamicPoints = dynamicHull
+        self.staticSurface = staticSurface
+        self.dynamicSurface = dynamicSurface
+        self.dynColour = dynColours
+        self.stitching = stitching
         
     def __call__(self):
         self.write("BeforeMatched")
@@ -40,6 +46,8 @@ class Matching:
 
         #self.areaMin()
         self.rotate(minTheta)
+        if(self.stitching):
+            self.rotateSurfaces(minTheta)
         self.write("Matched")
 
     def between_coords(self, polarCoords, theta):
@@ -87,6 +95,15 @@ class Matching:
             #print(centroid)
             self.dynamicPoints[i][1] -= centroid[1]
             self.dynamicPoints[i][2] -= centroid[2]
+
+    def centreDynamicWRTStatic(self):
+        centroid = self.staticCentroid()
+        amount = int(len(self.dynamicPoints))
+        for i in range(amount):
+            # print(centroid)
+            self.dynamicPoints[i][1] -= centroid[1]
+            self.dynamicPoints[i][2] -= centroid[2]
+
 
     def interpolate(self, polarCoords):
         domain = len(polarCoords)
@@ -285,37 +302,6 @@ class Matching:
 
      #  print(staticX)
 
-    def print(self):
-        print("dynamic spline co-efficients: " +  str(self.dSpline[1]))
-        print("static spline co-efficients: " + str(self.sSpline[1]))
-
-    def evaluate(self, theta):
-
-            v = np.zeros(2)
-            v[0] = np.cos(theta)
-            v[1] = np.sin(theta)
-            print(np.linalg.norm(v))
-            #x1 = interpolate.splev(theta, self.dSpline)
-           # x2 = interpolate.splev(theta, self.sSpline)
-            x1 = interpolate.splev(v, self.dSpline)
-
-            print("Our x1 following evaluation: " + str(x1))
-
-            return x1
-           # x1 = interpolate.splev(theta, self.dSpline)
-           # print(str(x1) + " = our x1")
-           # print(str(x2) + " = our x2")
-          #  d = np.subtract(x1, x2)
-           # print(d)
-           # print(np.linalg.norm(d))
-           # x1 = 0
-
-            #t1 = sqrt(pow(x1, 2)+ pow(y1, 2))
-           # t2 = sqrt(pow(x2, 2) + pow(y2, 2))
-
-            #subtract t2*v2 - t1*v1
-            #cal magnitude - add to total error
-            #solve for t
 
     def spline(self):
         self.tck_static, self.u_static = interpolate.splprep([self.staticX, self.staticY], s=0, per=True)
@@ -323,13 +309,7 @@ class Matching:
 
 
 
-    def areaMin(self):
-        con = np.concatenate((self.staticPoints, self.dynamicPoints), axis=0)
-        con = np.delete(con, 0, 1)
-        #print(con)
-        c = ConvexHull(con)
-       # print(c.area)
-        return c.area
+
 
     def rotate(self, angle):
         theta = np.radians(angle)
@@ -351,24 +331,24 @@ class Matching:
             self.dynamicPoints[i][1] = rot_D[0]
             self.dynamicPoints[i][2] = rot_D[1]
 
-    def error(self):
-        i = 0
-        errorDistance = 0
-        while i <= 1:
-            dynamicI = (interpolate.splev(i, self.tck_dynamic))
-            staticI = (interpolate.splev(i, self.tck_static))
-            # print("Our dynamic value: " + str(dynamicI) + " our static value : " + str(staticI))
-            # distanceX = dynamicI[0] - staticI[0]
-            # distanceY = dynamicI[1] - staticI[1]
-            #   d = np.(distanceX, distanceY)
-            dynamicNP = np.array(dynamicI)
-            staticNP = np.array(staticI)
-          # print("Our dynamic: " + str(dynamicNP))
-           #print("Our static: " + str(staticNP))
-            d = dynamicNP - staticNP
-            errorDistance += np.linalg.norm(d)
-            i += 0.01
-        return errorDistance
+
+
+    def rotateSurface(self, angle):
+        theta = np.radians(angle)
+        c, s = np.cos(theta), np.sin(theta)
+
+        R = np.array([[1,0,0],
+                     [0, c, -s],
+                     [0, s, c]])
+
+        for i in range(0, len(self.dynamicSurface)):
+
+            vector_ix = self.dynamicSurface[i]
+            rot_D = np.matmul(R, vector_ix)
+
+            self.dynamicSurface[i][0] = rot_D[0]
+            self.dynamicSurface[i][1] = rot_D[1]
+            self.dynamicSurface[i][2] = rot_D[2]
 
     def write(self, filename):
         f = open(filename + ".ply", "w+")

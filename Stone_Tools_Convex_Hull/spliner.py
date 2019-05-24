@@ -4,6 +4,7 @@ import numpy as np
 import random
 import math
 from Matching import Matching
+from Stitch_Pipeline import StitchPipeline
 from scipy.spatial import ConvexHull
 from scipy import interpolate
 
@@ -62,7 +63,17 @@ def error():
         d = dynamicNP - staticNP
         errorDistance += np.linalg.norm(d)
         i += 0.01
-
+# def surfaces(srcSurface, dynSurface):
+#     plySrc = PlyData.read(srcSurface)
+#     plyDyn = PlyData.read(dynSurface)
+#
+#     numVerticesSrc = plySrc['vertex'].count
+#     srcPts = np.zeros((numVerticesSrc))
+#     numVerticesDyn = plyDyn['vertex'].count
+#     dynPts = np.zeros((numVerticesDyn))
+#
+#     for i in range(numVerticesSrc):
+#         srcPts[i][0] = plySrc['vertex'][]
 def match(src, tgt):
     # Read in source ply data
     print(' - Reading data')
@@ -178,6 +189,60 @@ def matching(dynamic, static):
 
 
 
+def surfaceMatching(src, dyn, srcSurf, dynSurf):
+    print(' - Reading data')
+    plyStcH = PlyData.read(src)
+    plyDynH = PlyData.read(dyn)
+    plyStcSurf = PlyData.read(srcSurf)
+    plyDynSurf = PlyData.read(dynSurf)
+
+    numVertices = plyStcH['vertex'].count
+    srcPts = np.zeros((numVertices, 3))
+    dynamicSize = plyDynh['vertex'].count
+    stcSurfSize = plyStcSurf['vertex'].count
+    dynSurfSize = plyDynSurf['vertex'].count
+    # get the convex hull
+    srcColours = np.zeros((numVertices, 3))
+    dynamic_colours = np.zeros((dynamicSize, 3))
+
+    for i in range(numVertices):
+        srcPts[i][0] = plyStcH['vertex']['x'][i]
+        srcPts[i][1] = plyStcH['vertex']['y'][i]
+        srcPts[i][2] = plyStcH['vertex']['z'][i]
+        srcColours[i][0] = plyStcH['vertex']['red'][i]
+        srcColours[i][1] = plyStcH['vertex']['green'][i]
+        srcColours[i][1] = plyStcH['vertex']['blue'][i]
+
+
+    dynamicPoints = np.zeros((dynamicSize, 3))
+
+    for i in range(dynamicSize):
+        dynamicPoints[i][0] = plyDynH['vertex'][i][0]
+        dynamicPoints[i][1] = plyDynH['vertex'][i][1]
+        dynamicPoints[i][2] = plyDynH['vertex'][i][2]
+
+        dynamic_colours[i][0] = plyDynH['vertex']['red'][i]
+        dynamic_colours[i][1] = plyDynH['vertex']['green'][i]
+        dynamic_colours[i][2] = plyDynH['vertex']['blue'][i]
+
+
+    stcSurfPoints = np.zeros((stcSurfSize, 3))
+
+    for i in range(stcSurfSize):
+        stcSurfPoints[i][0] = plyStcSurf['vertex'][i][0]
+        stcSurfPoints[i][1] = plyStcSurf['vertex'][i][1]
+        stcSurfPoints[i][2] = plyStcSurf['vertex'][i][2]
+
+    dynSurfPoints = np.zeros((dynSurfSize, 3))
+    for i in range(dynSurfSize):
+        dynSurfPoints[i][0] = plyDynSurf['vertex'][i][0]
+        dynSurfPoints[i][1] = plyDynSurf['vertex'][i][1]
+        dynSurfPoints[i][2] = plyDynSurf['vertex'][i][2]
+
+    m = Matching(srcPts, stcSurfPoints, dynamicPoints, dynSurfPoints)
+    m.centreStatic()
+    m.centreDynamic()
+    m()
 
 def approximate_spline():
     for f in os.listdir('output'):
@@ -203,5 +268,28 @@ def match_hulls():
             print(static)
             print(dynamic)
             match(static, dynamic)
+
              #atch(static, tgt)
-match_hulls()
+
+def compute(src, dyn):
+    s = StitchPipeline(src, dyn)
+    s.setup()
+def match_surfaces():
+    for f in os.listdir('output'):
+        if os.path.isdir('output/' + f):
+
+
+            print(f)
+            static =  'output/' + f + '/' + f + '_static_point_cloud.ply'
+            staticSurface = 'output/' + f + '/' + f + '_static_surface_point_cloud.ply'
+
+            dynamic = 'output/' + f + '/' + f + '_dynamic_point_cloud.ply'
+            dynamicSurface = 'output/' + f + '/' + f + '_dynamic_surface_point_cloud.ply'
+
+            tgt = 'output/' + f + '/' + f + '_point_cloud_planified.ply'
+
+            print(static)
+            print(dynamic)
+            compute(staticSurface, dynamicSurface)
+            # surfaceMatching(static, dynamic, staticSurface, dynamicSurface)
+match_surfaces()
