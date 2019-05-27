@@ -16,16 +16,40 @@ class Matching:
 
     
     
-    def __init__(self, staticHull, dynamicHull, dynColours, staticSurface =None, dynamicSurface = None, stitching = False):
+    def __init__(self, staticHull, dynamicHull, dynColours = None, staticSurface =None, dynamicSurface = None, stitching = False):
         self.staticPoints = staticHull
         self.dynamicPoints = dynamicHull
         self.staticSurface = staticSurface
         self.dynamicSurface = dynamicSurface
         self.dynColour = dynColours
         self.stitching = stitching
-        
+        print(stitching)
+
+    def write(self, filename, points, threeD):
+        f = open(filename + ".ply", "w+")
+        f.write("ply\n" + "format ascii 1.0\n" + "element vertex " + str(len(points)
+                                                                         ) + "\n" + "property float x\n" + "property float y\n" + "property float z\n" +
+                "property uchar red\n" + "property uchar green\n" + "property uchar blue\n" + "end_header\n")
+        if (threeD):
+            axis = 3
+        else:
+            axis = 2
+        domain = int(len(points))
+        for i in range(int(domain)):
+            for j in range(0, axis):
+                f.write(str(points[i][j]) + " ")
+
+            if (not threeD):
+                f.write(str("0") + " ")
+            for p in range(0, 3):
+                if p < 2:
+                    f.write(str(int(255)) + " ")
+                else:
+                    f.write(str(int(0)))
+            f.write("\n")
+        f.close()
+
     def __call__(self):
-        self.write("BeforeMatched")
         theta = 0
         minTheta = 0
         minError = math.inf
@@ -47,8 +71,7 @@ class Matching:
         #self.areaMin()
         self.rotate(minTheta)
         if(self.stitching):
-            self.rotateSurfaces(minTheta)
-        self.write("Matched")
+            self.rotateSurface(minTheta)
 
     def between_coords(self, polarCoords, theta):
         for i in range(1, len(polarCoords)):
@@ -61,22 +84,22 @@ class Matching:
         centroid = np.zeros((3, 1))
         amount = int(len(self.staticPoints))
         for i in range(amount):
+            centroid[0] += self.staticPoints[i][1]
             centroid[1] += self.staticPoints[i][1]
-            centroid[2] += self.staticPoints[i][2]
         
-        centroid[1] /= (amount)
-        centroid[2] /= amount
+        centroid[0] /= (amount)
+        centroid[1] /= amount
         return centroid
    
     def dynamicCentroid(self):
         centroid = np.zeros((3, 1))
         amount = int(len(self.dynamicPoints))
         for i in range(amount):
+            centroid[0] += self.dynamicPoints[i][0]
             centroid[1] += self.dynamicPoints[i][1]
-            centroid[2] += self.dynamicPoints[i][2]
         
-        centroid[1] /= (amount)
-        centroid[2] /= amount
+        centroid[0] /= (amount)
+        centroid[1] /= amount
         return centroid
 
 
@@ -85,24 +108,24 @@ class Matching:
         amount = int(len(self.staticPoints))
         for i in range(amount):
             #print(centroid)
+            self.staticPoints[i][0] -= centroid[0]
             self.staticPoints[i][1] -= centroid[1]
-            self.staticPoints[i][2] -= centroid[2]
 
     def centreDynamic(self):
         centroid = self.dynamicCentroid()
         amount = int(len(self.dynamicPoints))
         for i in range(amount):
             #print(centroid)
+            self.dynamicPoints[i][0] -= centroid[0]
             self.dynamicPoints[i][1] -= centroid[1]
-            self.dynamicPoints[i][2] -= centroid[2]
 
     def centreDynamicWRTStatic(self):
         centroid = self.staticCentroid()
         amount = int(len(self.dynamicPoints))
         for i in range(amount):
             # print(centroid)
+            self.dynamicPoints[i][0] -= centroid[0]
             self.dynamicPoints[i][1] -= centroid[1]
-            self.dynamicPoints[i][2] -= centroid[2]
 
 
     def interpolate(self, polarCoords):
@@ -118,9 +141,10 @@ class Matching:
             x1 = int(polarCoords[i-1][2]) 
             #print(x2)
 
-            m = (self.staticPoints[x2][2] - self.staticPoints[x1][2])/(self.staticPoints[x2][1] - self.staticPoints[x1][1])
+            #y
+            m = (self.staticPoints[x2][1] - self.staticPoints[x1][1])/(self.staticPoints[x2][0] - self.staticPoints[x1][0])
             lineEq[i][0] = m
-            b = m*(-self.staticPoints[x1][1]) + self.staticPoints[x1][2]
+            b = m*(-self.staticPoints[x1][0]) + self.staticPoints[x1][1]
             lineEq[i][1] = b
         
     
@@ -128,9 +152,9 @@ class Matching:
             x2 = int(self.dynamicPolar[i][2])
             x1 = int(self.dynamicPolar[i-1][2])
 
-            m = (self.dynamicPoints[x2][2] - self.dynamicPoints[x1][2])/(self.dynamicPoints[x2][1] - self.dynamicPoints[x1][1])
+            m = (self.dynamicPoints[x2][1] - self.dynamicPoints[x1][1])/(self.dynamicPoints[x2][0] - self.dynamicPoints[x1][0])
             dynLine[i][0] = m
-            b = m*(-self.dynamicPoints[x1][1]) + self.dynamicPoints[x1][2]
+            b = m*(-self.dynamicPoints[x1][0]) + self.dynamicPoints[x1][1]
             dynLine[i][1] = b
 
 
@@ -194,7 +218,7 @@ class Matching:
         polarDynamic = np.zeros((dynamicSize, 3))
 
         for i in range(staticSize):
-            x, y = self.staticPoints[i][1], self.staticPoints[i][2]
+            x, y = self.staticPoints[i][0], self.staticPoints[i][1]
             r = np.sqrt(x**2 + y**2)
 
             phi = np.arctan2(y, x)
@@ -212,7 +236,7 @@ class Matching:
         #sort according to theta
         polarStatic = polarStatic[polarStatic[:,1].argsort()]
         for i in range(dynamicSize):
-            x, y= self.dynamicPoints[i][1], self.dynamicPoints[i][2]
+            x, y= self.dynamicPoints[i][0], self.dynamicPoints[i][1]
             r = np.sqrt(x**2 + y **2)
             phi = np.arctan2(y, x)
             if(phi < 0):
@@ -322,14 +346,14 @@ class Matching:
         R[1][1] = c
 
         for i in range(0, len(self.dynamicPoints)):
+            pt = self.dynamicPoints[i]
+            # omitZ = np.zeros((2, 1))
+            # omitZ[0] = self.dynamicPoints[i][0]
+            # omitZ[1] = self.dynamicPoints[i][1]
+            rot_D = np.matmul(R, pt)
 
-            omitZ = np.zeros((2, 1))
-            omitZ[0] = self.dynamicPoints[i][1]
-            omitZ[1] = self.dynamicPoints[i][2]
-            rot_D = np.matmul(R, omitZ)
-
-            self.dynamicPoints[i][1] = rot_D[0]
-            self.dynamicPoints[i][2] = rot_D[1]
+            self.dynamicPoints[i][0] = rot_D[0]
+            self.dynamicPoints[i][1] = rot_D[1]
 
 
 
@@ -350,18 +374,3 @@ class Matching:
             self.dynamicSurface[i][1] = rot_D[1]
             self.dynamicSurface[i][2] = rot_D[2]
 
-    def write(self, filename):
-        f = open(filename + ".ply", "w+")
-        f.write("ply\n" + "format ascii 1.0\n" + "element vertex " + str(len(self.dynamicPoints)
-           ) + "\n" + "property float x\n" + "property float y\n" + "property float z\n" + "property uchar red\n" + "property uchar green\n" + "property uchar blue\n" + "end_header\n")
-        domain = int(len(self.dynamicPoints))
-        for i in range(int(domain)):
-            for j in range(0, 3):
-                f.write(str(self.dynamicPoints[i][j]) + " ")
-            for p in range(0, 3):
-                if p < 2:
-                    f.write(str(int(255)) + " ")
-                else:
-                    f.write(str(int(0)))
-            f.write("\n")
-        f.close()

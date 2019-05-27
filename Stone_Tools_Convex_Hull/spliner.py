@@ -160,8 +160,6 @@ def match(src, tgt):
    # m.rotate(360)
    #  m.write("Rotated90")
 
-
-#
 def matching(dynamic, static):
     # Read in source ply data
     print(' - Reading data')
@@ -274,6 +272,7 @@ def match_hulls():
 def compute(src, dyn):
     s = StitchPipeline(src, dyn)
     s.setup()
+    s.match()
 def match_surfaces():
     for f in os.listdir('output'):
         if os.path.isdir('output/' + f):
