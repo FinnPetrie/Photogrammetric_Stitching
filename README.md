@@ -3,7 +3,7 @@
 Research project: a pipeline for 'stitching' two partial incomplete models. 
 More details here: https://ieeexplore.ieee.org/document/8961032
 
-Features:
+Features:\n
 C++:
 KMeans and Iterative Closest Point Implementations, as well as a general point cloud class for topological operations.
 Python:
